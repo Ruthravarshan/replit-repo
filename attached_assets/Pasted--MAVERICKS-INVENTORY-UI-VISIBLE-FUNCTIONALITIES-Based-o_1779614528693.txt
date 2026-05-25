@@ -1,0 +1,112 @@
+# MAVERICKS INVENTORY - UI VISIBLE FUNCTIONALITIES
+
+Based on the full specification, here is the comprehensive list of all functionalities that will be visible on the User Interface (UI), categorized by module and screen.
+
+## 1. Authentication & User Profile
+- **Login Screen**: Email/password input, forgot password link, account lockout warning.
+- **First Login**: Mandatory password change form.
+- **User Profile**: View user details (role, department, location), update contact info, view recent login history.
+- **Session**: Warning modal 5 minutes before session expiry.
+
+## 2. Dashboards (Role-Based)
+- **Executive Dashboard**:
+  - My Transactions widget (counts by Draft, Submitted, Approved, Rejected).
+  - Pending Actions widget (rejected transactions needing resubmission).
+  - Stock Availability widget (most-distributed categories).
+  - AI Alert banner (anomalies relevant to scope).
+  - AI-generated Inventory Health Summary.
+  - Recent Activity feed.
+  - Quick Actions: New Distribution, Upload Excel, View Reports.
+- **Manager Dashboard**:
+  - Pending Approvals widget (queue count).
+  - High-Risk Approvals highlight.
+  - Today's Actions (approvals/rejections made today).
+  - AI Anomaly Alerts panel.
+  - Stock Health Overview (items below minimum level).
+  - Approval Velocity metric (average turnaround time).
+- **Admin Dashboard**:
+  - System Health overview (API, DB, Blob, OpenAI status).
+  - User Activity (active sessions, logins today).
+  - Total Transactions by Status charts.
+  - Top 10 Most Distributed Items.
+  - Anomaly Summary by severity.
+  - Approval Bottlenecks (transactions pending > 48 hours).
+  - Excel Upload History.
+  - AI Agent Status & Metrics.
+
+## 3. Stock Master Management
+- **Stock Items List**: 
+  - Paginated data grid with sorting and filtering (Category, Status, Location).
+  - Color-coded Health Status column (Green, Yellow, Red).
+  - Search bar (by Code or Name).
+  - Export to Excel / PDF buttons.
+- **Stock Item Form (Create/Edit)**:
+  - Input fields for all stock attributes (Category, UoM, Min Level, etc.).
+  - Read-only fields for active items (Code locked).
+  - Mini-view of Stock Ledger history.
+- **Bulk Upload Interface**:
+  - Download template button.
+  - Drag-and-drop file upload zone with progress indicator.
+  - Async result summary (rows processed, corrected, failed).
+  - Download link for Excel Error Report.
+
+## 4. Distribution & Transactions
+- **New Distribution Form**:
+  - Stock selector dropdown with real-time "Available Quantity" display.
+  - Recipient lookup field.
+  - Mandatory "Purpose / Remarks" text area.
+  - Submit or Save as Draft buttons.
+- **Distribution List**:
+  - Data grid of transactions scoped to the user's role.
+  - Status badges (Draft, Submitted, L1-Pending, Approved, Rejected).
+- **Transaction Detail View**:
+  - Full transaction data.
+  - Complete immutable audit trail / state history.
+  - AI reasoning text and approval remarks trail.
+
+## 5. Approval Workspace (Managers & Authority)
+- **Approval Queue**:
+  - Card-based layout of pending transactions.
+  - AI Risk Score badge (Low, Medium, High).
+  - AI Recommendation card (Approve, Review, Reject) with plain-language reasoning.
+  - Action buttons: Approve, Reject, View Details.
+  - Bulk approve functionality for Low-risk items with confirmation dialog.
+- **Rejection Modal**:
+  - Mandatory remarks text area (minimum 20 chars).
+
+## 6. Reports & Analytics
+- **Standard Reports Interface**:
+  - Dropdown to select from 8 standard reports (Stock Availability, Approvals, Ledger, Anomalies, etc.).
+  - Dynamic filter panel (Date Range, Category, Status, Location).
+  - Data table preview with skeleton loaders.
+  - Export to Excel/PDF buttons.
+- **Conversational Insights (AI Agent 4)**:
+  - Chat-style natural language query input box ("Ask Inventory").
+  - Suggested query chips.
+  - Formatted data table results generated from natural language.
+
+## 7. Anomalies & Notifications
+- **In-App Notification Tray**:
+  - Bell icon in header with unread badge.
+  - Paginated list of notifications.
+  - "Mark all as read" button and deep-links to specific transactions.
+- **Anomaly Dashboard**:
+  - Active anomaly cards sorted by severity (Critical, Warning, Info).
+  - AI Explanation and Recommended Action text.
+  - Acknowledge / Resolve buttons with mandatory resolution notes modal.
+
+## 8. System Administration (Admin Only)
+- **User Management**:
+  - User list grid.
+  - Create User form (triggers password email).
+  - Role, department, and location assignment dropdowns.
+  - Deactivate user button (soft delete).
+- **System Configuration Tabs**:
+  - Workflow & RBAC: Configure L2 escalation thresholds, SLAs, and approval mappings.
+  - Templates: Upload new Excel templates.
+  - AI Settings: Adjust anomaly sensitivity, risk weights, fallback toggle.
+  - Notifications: Enable/disable email triggers.
+- **Organization Hierarchy**:
+  - Forms to add/edit Departments and Locations.
+- **Master Data Lookups**:
+  - Grids to add/edit Categories and Units of Measure.

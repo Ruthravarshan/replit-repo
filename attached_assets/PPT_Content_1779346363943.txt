@@ -1,0 +1,395 @@
+
+╔══════════════════════════════════════════════════════════════════╗
+          MAVERICKS INVENTORY — PPT CONTENT (Slide-by-Slide)
+    Based on: Mavericks Designathon Presentation Template
+╚══════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SLIDE 1 — TITLE SLIDE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Event:       Hexaware Mavericks GenAI Designathon 2026
+
+  App Name:    Mavericks Inventory
+               Autonomous Inventory Intelligence Platform
+
+  Team Name:   Mavericks
+
+  Team Members:
+    • Ruthravarshan    — 2000171723
+    • Sai Ritheshwar   — 2000171692
+    • Sai Anish V U    — 2000167626
+    • [Member 4 Name]  — [ID]
+
+  [Keep the Hexaware branding, dark gradient background
+   exactly as in the template. Do not modify layout.]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SLIDE 2 — PROBLEM STATEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [TOP LEFT] — WHO IS IMPACTED
+    • Executives — Upload stock data, initiate transactions
+    • Managers / Approvers — Face approval overload and decision fatigue
+    • Management Authorities — Risk compliance gaps and audit inconsistencies
+    • Organizations at large — Bear financial and operational inefficiencies
+
+  [TOP RIGHT] — CURRENT PAIN POINTS
+    • Manual Dependency: Continuous human involvement for every validation,
+      reconciliation, and approval step
+    • Delayed Decisions: Approval bottlenecks slow stock movement and operations
+    • Poor Fault Resilience: Partial uploads, missed transactions, and silent
+      failures go undetected
+    • Lack of Intelligence: Systems capture data but do not reason or learn from it
+
+  [BOTTOM LEFT] — WHY IT MATTERS
+    Scale:   Inventory spans departments, locations, and thousands of daily
+             transactions — too large for purely manual management.
+    Urgency: Manual reconciliation and delayed approvals directly impact
+             business continuity and SLAs.
+    If left unaddressed:
+      → Stockouts or overstocking
+      → Audit and compliance failures
+      → Rising operational costs
+      → Eroded trust in inventory data
+
+  [BOTTOM RIGHT / CENTRE] — THE PROBLEM
+    Modern inventory systems lack autonomous intelligence.
+    They capture transactions but cannot self-validate, detect anomalies
+    early, or self-correct without human intervention — leading to
+    persistent data drift, approval delays, and operational risk at scale.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SLIDE 3 — PROPOSED SOLUTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [HEADLINE — Proposed Solution]
+    Mavericks Inventory is an AI-augmented autonomous inventory intelligence
+    platform combining enterprise-grade controls (maker–checker, RBAC, full
+    audit trails) with Generative AI-driven insights, anomaly detection, and
+    self-monitoring workflows. Humans intervene only when AI flags risk or
+    deviation — ensuring persistent accuracy, resilience, and sustainability.
+
+  Key Feature 1 — Autonomous Inventory Validation
+    Continuously validates stock levels using historical patterns and
+    rule-based checks to proactively prevent data drift and discrepancies.
+
+  Key Feature 2 — AI-Driven Anomaly Detection
+    Detects unusual stock movements, spikes, or inconsistencies in real time
+    with risk scoring and plain-language explanations for every alert.
+
+  Key Feature 3 — Intelligent Approval Assist
+    Provides AI-generated approve / review / reject recommendations with
+    contextual reasoning, helping approvers decide faster and with confidence.
+
+  Key Feature 4 — Fault-Tolerant & Self-Healing Workflows
+    Automatically detects partial uploads, failed transactions, and system
+    issues, triggering rollback and recovery mechanisms without manual effort.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SLIDE 4 — TECH STACK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Programming Languages
+    Python, TypeScript
+
+  Frameworks
+    React (Frontend SPA), FastAPI (Backend REST API)
+
+  Databases
+    PostgreSQL (primary relational store with full audit log tables)
+
+  Cloud Services
+    Microsoft Azure — App Service (backend + frontend hosting),
+                       Blob Storage (Excel uploads & report exports)
+
+  Gen AI Models / APIs
+    Azure OpenAI — GPT-4o
+    (Used for insight generation, anomaly explanation, approval assist)
+
+  Other Tools
+    Docker, GitHub, GitHub Actions (CI/CD), Figma (UI/UX design)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SLIDE 5 — GEN AI USE CASES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [HEADER NOTE]
+    Gen AI is used surgically — only where contextual reasoning adds value
+    that rule-based logic cannot provide. This keeps costs low and outputs trustworthy.
+
+  Use Case 1 — Inventory Insight Generator
+    Input:       Current stock levels + historical distribution data
+    Output:      Natural-language inventory health summary for managers
+    Enhancement: Eliminates manual analysis; gives instant, readable stock
+                 status without requiring BI skills
+
+  Use Case 2 — Approval Recommendation Engine
+    Input:       Distribution request details + historical demand trends
+    Output:      Approve / Review / Reject recommendation with reasoning
+    Enhancement: Reduces approval turnaround time and combats decision fatigue
+
+  Use Case 3 — Anomaly Explanation Assistant
+    Input:       Detected anomaly event + relevant historical context
+    Output:      Plain-language explanation of the anomaly cause + suggested
+                 corrective action
+    Enhancement: Builds trust in AI alerts and dramatically reduces
+                 manual investigation effort
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SLIDE 6 — UI/UX WIREFRAMES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [INSERT FIGMA / SCREENSHOT IMAGES]
+
+  Screen 1 — Inventory Dashboard
+    Real-time stock level table with colour-coded health scores, AI alert
+    banners for anomalies, quick filters by category/location, and an
+    Export (Excel/PDF) button. Designed for Executives.
+
+  Screen 2 — Approval Workspace
+    Displays the distribution request summary, AI-generated recommendation
+    card (Approve / Review / Reject) with risk score and plain-language
+    reasoning, and one-click approve/reject with mandatory remarks field.
+    Designed for Managers / Management Authorities.
+
+  [Add your Figma wireframe images and describe key user flows for each screen.]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SLIDE 7 — DEVELOPMENT TIMELINE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [5-column timeline bar — Week 1 through Week 5]
+
+  Week 1
+      Requirements finalization, system architecture design, database schema,
+      UI/UX wireframes (Figma)
+
+  Week 2
+    Stock master module — Excel upload with validation, single-item CRUD,
+    RBAC setup (Executive / Manager / Admin roles)
+
+  Week 3
+    Stock distribution entry (single + bulk), maker–checker approval workflow,
+    status flow (Draft → Submitted → Approved / Rejected)
+
+  Week 4
+    Gen AI integrations — Insight Generator, Approval Assist, Anomaly
+    Explanation; anomaly detection engine, self-healing workflows
+
+  Week 5
+    Dashboards, reports (Excel/PDF export), end-to-end testing,
+    stabilization → ~80% completion milestone
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SLIDE 8 — TEAM ROLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Gen AI
+    [Team Member Name]
+    • Azure OpenAI integration
+    • Prompt engineering & optimization
+    • AI workflow design
+
+  Backend
+    [Team Member Name]
+    • FastAPI REST services
+    • PostgreSQL schema & audit logs
+    • Approval workflow engine
+
+  Frontend
+    [Team Member Name]
+    • React SPA
+    • Dashboard & approval workspace
+    • Excel upload UI
+
+  UI/UX
+    [Team Member Name]
+    • Figma wireframes
+    • Design system & component library
+    • User flow documentation
+
+  Documentation
+    [Team Member Name]
+    • BRD, architecture docs
+    • API documentation
+    • Presentation & submission
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SLIDE 9 — INNOVATION & DIFFERENTIATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [WHAT MAKES IT UNIQUE]
+    Unlike traditional inventory tools that are purely transactional, Mavericks
+    Inventory introduces autonomous intelligence — the system reasons, explains,
+    and self-corrects. It is the first inventory platform built around an
+    exception-driven human model.
+
+  1 — Autonomous Inventory Intelligence
+      A self-monitoring, self-correcting system that continuously validates stock
+      accuracy without waiting for human intervention.
+
+  2 — Exception-Driven Human Involvement
+      Humans are involved only when AI detects meaningful deviations — not for
+      every routine operation — drastically reducing cognitive load.
+
+  3 — Explainable AI at Every Step
+      Every AI output (recommendation, anomaly alert, insight) comes with a
+      plain-language rationale — fully interpretable and auditable.
+
+  4 — Sustainable & Cost-Conscious AI Usage
+      Gen AI is triggered only on exceptions (anomalies, approvals, insights).
+      Standard workflows run on deterministic logic — keeping API costs minimal.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SLIDE 10 — GEN AI DESIGN STRATEGY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  1 — Rationale for Gen AI
+      Traditional rule-based logic can flag anomalies but cannot explain them
+      or recommend nuanced actions. Gen AI (GPT-4o via Azure OpenAI) provides
+      contextual reasoning, plain-language insights, and adaptive recommendations
+      that no static rule set can replicate — while remaining fully auditable.
+
+  2 — Prompt Design
+      All prompts use a structured template:
+        • Context injection — limited relevant historical data (last N records)
+        • Clear role framing — "You are an inventory analyst..."
+        • Hard output format constraints — JSON schema enforced
+        • Explicit boundaries — no assumptions beyond provided data
+      This ensures deterministic, low-hallucination responses.
+
+  3 — AI Workflow
+      Gen AI is triggered at three precise points only:
+        → Anomaly detected: AI explains cause + recommends action
+        → Approval review: AI scores risk + recommends decision
+        → Dashboard load: AI generates inventory health summary
+      All other flows use standard business logic — no AI overhead.
+
+  4 — Human-in-the-Loop
+      AI never takes autonomous action. All recommendations require human
+      confirmation. Managers can override any AI suggestion with mandatory
+      remarks. Fallback rule-based logic activates if AI is unavailable.
+      Full audit trail maintained for every AI-assisted decision.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SLIDE 11 — COST AWARENESS & AI USAGE OPTIMISATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [THREE PILLARS]
+
+  Prompt Efficiency
+    • Structured prompts with strict token budgets
+    • Only relevant context injected (not full history)
+    • JSON-formatted outputs to avoid verbose generation
+    • Consistent prompt templates reused across use cases
+
+  Limited API Calls
+    • AI invoked only on exceptions — not on every transaction
+    • Batch insight generation (one call per dashboard load)
+    • No real-time streaming; async calls with caching
+    • Rate-limit guards and retry logic in place
+
+  Rule-Based Fallbacks
+    • Standard approval flows use deterministic business rules
+    • AI assists but never blocks workflow execution
+    • If Azure OpenAI is unavailable, rule-based fallback activates seamlessly
+    • Cached AI summaries reused within short TTL windows
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SLIDE 12 — RISKS, ASSUMPTIONS & CONSTRAINTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Scope Boundaries (what is OUT of scope)
+    • No financial accounting or invoicing
+    • No vendor procurement or purchase order workflows
+    • No IoT integrations or warehouse automation
+    • No GST / statutory compliance reporting
+
+  Key Risks
+    • Incorrect Excel uploads causing invalid stock data
+      → Mitigation: Template validation + downloadable error report
+    • AI misinterpretation of edge-case anomalies
+      → Mitigation: Human-in-the-loop confirmation; fallback rules
+    • Approval bottleneck if approvers are unavailable
+      → Mitigation: Configurable escalation mechanism
+
+  Assumptions
+    • Excel templates will be standardized and finalized before rollout
+    • Approval hierarchy is configurable per business unit needs
+    • All users have stable internet access during operations
+
+  Technical Constraints
+    • Azure OpenAI API rate limits apply (managed with retry + caching)
+    • Limited historical data available in early stages — AI context window
+      may be smaller until data accumulates
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SLIDE 13 — SUCCESS METRICS (Part 1)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  1 — Time Saved
+      Target: ≥40% reduction in approval turnaround time
+      AI-generated recommendations surface the right information instantly,
+      eliminating manual lookups and enabling same-day approvals.
+
+  2 — Adoption
+      Target: High usage rate by Executives and Managers within weeks of launch
+      Measured by: weekly active users, distribution entries submitted,
+      approvals processed via the platform vs. offline channels.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SLIDE 14 — SUCCESS METRICS (Part 2)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  3 — Error Reduction
+      Target: ≥60% reduction in stock discrepancies
+      Autonomous validation and anomaly detection catch issues before they
+      propagate — replacing reactive fixes with proactive prevention.
+
+  4 — Automation %
+      Target: ≥70% of inventory workflows fully automated
+      Standard validation, stock reconciliation, and report generation run
+      without any manual steps — AI handles exception routing automatically.
+
+  5 — Efficiency Gains
+      Faster end-to-end stock operations (upload → approval → adjustment)
+      Reduced time-to-insight for management reporting
+      Improved trust in inventory data — fewer audit queries and escalations
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SLIDE 15 — CLOSING / THANK YOU
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [CENTRE — VISION STATEMENT — large, bold]
+
+  "Mavericks Inventory transforms inventory management
+   from manual tracking to autonomous, self-governing
+   inventory intelligence."
+
+  [BELOW — smaller supporting line]
+  Secure · Scalable · Auditable · AI-Augmented
+
+  [BOTTOM]
+  Team Mavericks | Hexaware GenAI Designathon 2026
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NOTES FOR PRESENTER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  EVALUATION WEIGHTAGE (from brochure) — design content to hit these:
+    30%  Functionality & Completeness  → Slides 3, 7, 12
+    20%  Gen AI Utilization            → Slides 5, 10, 11
+    15%  Innovation & Creativity       → Slide 9
+    15%  UI/UX                         → Slide 6
+    10%  Code Quality & Engineering    → Slide 4, 10
+    10%  Cost Efficiency               → Slide 11
+
+  KEY TALKING POINTS:
+    • Emphasize "exception-driven" model — AI only where needed
+    • Stress explainability — every AI output has a reason
+    • Highlight maker-checker as compliance backbone
+    • Connect each Gen AI use case to a real pain point from Slide 2
+    • Mention ~80% completion target clearly in timeline slide
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

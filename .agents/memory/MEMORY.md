@@ -1,0 +1,3 @@
+- [Date serialization](date-serialization.md) — Drizzle returns Date objects; must call `.toISOString()` before Zod `.parse()` on all routes
+- [Role RBAC context](rbac-context.md) — simulated RBAC lives in `src/contexts/role-context.tsx`; roles: admin/executive/manager; stored in localStorage
+- [Activity logging pattern](activity-logging.md) — all write actions (approve, reject, submit, create) must insert to `activityTable`; actor is the role string ("Manager", "executive", "system")

@@ -1,0 +1,37 @@
+I am building the frontend for "Mavericks Inventory", an AI-augmented autonomous inventory intelligence platform for the Hexaware GenAI Designathon. Please read the attached project documents to understand the full context.
+
+Your task is to build a highly premium, modern, and interactive React (Single Page Application) frontend for this platform. 
+
+### Tech Stack & Libraries
+- **Framework:** React + TypeScript (Vite)
+- **Styling:** Tailwind CSS (or Vanilla CSS if preferred, but use modern utility patterns).
+- **Icons:** Lucide React
+- **Charts:** Recharts (or similar for inventory distribution visualizations)
+
+### Design & Aesthetic Requirements (CRITICAL)
+- **Vibe:** Enterprise-grade, premium, intelligent, and highly trustworthy. It should have a "Wow" factor.
+- **Theme:** Sleek dark mode or a high-contrast dark/light gradient theme (aligning with Hexaware branding if possible).
+- **Styling:** Use glassmorphism for AI cards, smooth gradients, modern typography (e.g., Inter or Roboto), and dynamic micro-animations (hover effects, smooth transitions).
+- **Data Visualization:** Use color-coded health scores (e.g., Green=Healthy, Yellow=Warning, Red=Critical/Anomaly).
+
+### Screens to Build
+Please create a layout with a persistent sidebar navigation and build the following two primary screens:
+
+#### 1. Inventory Dashboard (For Executives)
+- **Real-time Stock Table:** A comprehensive data table showing inventory items, current stock, location, category, and a color-coded health score.
+- **AI Alert Banners:** Prominent, dismissible alert banners at the top of the dashboard flagging detected anomalies (e.g., "Unusual stock depletion detected in Warehouse A").
+- **Quick Filters:** Interactive chips or dropdowns to filter by Category, Location, and Status.
+- **Export Action:** A prominent button to "Export Report (Excel/PDF)".
+- **Insight Widget:** A card displaying an "AI Inventory Health Summary" in natural language.
+
+#### 2. Approval Workspace (For Managers / Approvers)
+- **Distribution Request Summary:** A clear breakdown of the pending stock movement/transaction request.
+- **AI Recommendation Card (Glassmorphism):** A visually distinct card showing the AI's recommendation (Approve / Review / Reject) with a Risk Score (e.g., Low, Medium, High) and a plain-language explanation of why this recommendation was made.
+- **Action Area:** Large, clear buttons for "Approve" and "Reject".
+- **Remarks Field:** A mandatory text area for the approver to leave remarks before confirming their action.
+
+### Instructions for the Agent
+1. **Mock Data:** Please generate realistic, robust mock data for inventory items, anomalies, and approval requests so the UI looks completely populated and functional immediately.
+2. **Components:** Break the UI down into reusable components (e.g., `AiAlertBanner`, `StockTable`, `ApprovalCard`).
+3. **Interactivity:** Ensure all tabs, buttons, and filters have interactive states (hover/focus rings) to make the prototype feel alive. 
+4. **First Step:** Start by setting up the main routing/layout and the Global CSS/Theme variables, then build the Dashboard screen first.

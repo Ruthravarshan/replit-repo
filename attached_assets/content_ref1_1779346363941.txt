@@ -1,0 +1,226 @@
+🏆 HEXAWARE MAVERICKS DESIGNATHON 2026
+App Name
+Mavericks Inventory – Autonomous Inventory Intelligence Platform
+Team Name
+Mavericks
+Team Members
+
+Member 1: Employee Name – ID
+Member 2: Employee Name – ID
+Member 3: Employee Name – ID
+Member 4: Employee Name – ID
+
+
+🚩 Problem Statement
+Modern enterprises rely on inventory systems that require continuous human intervention to maintain accuracy, approve transactions, and correct discrepancies. Over time, this leads to data drift, operational delays, approval bottlenecks, and increased risk of stock mismanagement. Existing inventory solutions focus on transactional record‑keeping rather than autonomous intelligence, lacking self‑validation, anomaly detection, and fault tolerance. The challenge is to build a future‑ready, autonomous inventory system that maintains persistent accuracy, minimizes human dependency, and remains resilient to failures using Generative AI and intelligent automation.
+
+❓ Why It Matters
+
+Scale: Inventory operations span departments, locations, and thousands of transactions daily.
+Urgency: Manual reconciliation and delayed approvals directly impact business continuity.
+Consequence of Inaction:
+
+Stockouts or overstocking
+Audit and compliance failures
+Increased operational cost
+Low trust in inventory data
+
+
+
+Without intelligent automation, inventory systems become unsustainable as organizations scale.
+
+⚠️ Current Pain Points
+
+Manual Dependency: Continuous human involvement for validation, reconciliation, and approvals.
+Delayed Decision‑Making: Approval bottlenecks slow stock movement and operations.
+Poor Fault Resilience: Partial uploads, missed transactions, and silent failures go undetected.
+Lack of Intelligence: Systems capture data but do not reason or learn from it.
+
+
+🔍 The Problem
+The core challenge is the absence of autonomous intelligence in inventory systems, resulting in declining accuracy, heavy manual intervention, and vulnerability to operational failures. There is no mechanism to continuously validate inventory, detect anomalies early, or self‑correct without human involvement.
+
+👥 Who Is Impacted
+
+Executives / Operations Teams: Responsible for stock entries and uploads.
+Managers / Approvers: Face approval overload and decision fatigue.
+Management Authorities: Risk compliance gaps and audit inconsistencies.
+Organizations: Bear financial and operational inefficiencies.
+
+
+💡 Proposed Solution
+Mavericks Inventory is an AI‑augmented, autonomous inventory intelligence platform that combines enterprise‑grade controls (maker–checker, RBAC, audits) with Generative AI‑driven insights, anomaly detection, and self‑monitoring workflows. The system operates on an exception‑driven model, where humans intervene only when AI detects risk or deviation—ensuring persistent accuracy, resilience, and sustainability.
+
+⭐ Key Features
+1️⃣ Autonomous Inventory Validation
+Continuously validates stock levels using historical patterns and rule‑based checks to prevent data drift.
+2️⃣ AI‑Driven Anomaly Detection
+Detects unusual stock movements, spikes, or inconsistencies with risk scoring and explanations.
+3️⃣ Intelligent Approval Assist
+Provides AI‑generated recommendations and reasoning to help approvers make faster, confident decisions.
+4️⃣ Fault‑Tolerant & Self‑Healing Workflows
+Automatically detects partial uploads, failed transactions, and system issues with rollback and recovery mechanisms.
+
+🛠️ Tech Stack
+Programming Languages
+
+Python
+TypeScript
+
+Frameworks
+
+React
+FastAPI
+
+Databases
+
+PostgreSQL
+
+Cloud Services
+
+Azure (App Service, Blob Storage)
+
+Gen AI Models / APIs
+
+Azure OpenAI (GPT‑4 / GPT‑4o)
+
+Other Tools
+
+Docker
+GitHub
+GitHub Actions
+Figma
+
+
+🤖 Gen AI Use Cases
+Use Case 1 — Inventory Insight Generator
+Input: Current stock data, distribution history
+Output: Natural‑language inventory health summary
+Enhancement: Helps managers understand inventory state without manual analysis
+
+Use Case 2 — Approval Recommendation Engine
+Input: Distribution request + historical trends
+Output: Approve / Review / Reject recommendation with explanation
+Enhancement: Reduces approval time and decision fatigue
+
+Use Case 3 — Anomaly Explanation Assistant
+Input: Detected anomaly + historical context
+Output: Explanation of why anomaly occurred and suggested action
+Enhancement: Builds trust and reduces investigation effort
+
+🎨 UI / UX Wireframes (Description)
+Screen 1 — Inventory Dashboard
+Shows real‑time stock levels, AI alerts, and health scores.
+Screen 2 — Approval Workspace
+Displays distribution request, AI recommendation, risk score, and approval actions.
+(Wireframes to be attached via Figma / Excalidraw)
+
+🗓️ Development Timeline
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+WeekDeliverablesWeek 1Requirements finalization, architecture, wireframesWeek 2Stock master, Excel uploads, RBACWeek 3Distribution flow, maker–checker approvalsWeek 4Gen AI integrations, anomaly detectionWeek 5Dashboards, reports, stabilization (~80% complete)
+
+👨‍💻 Team Roles
+
+Gen AI: Team Member Name
+Backend: Team Member Name
+Frontend: Team Member Name
+UI/UX: Team Member Name
+Documentation: Team Member Name
+
+
+🌟 Innovation & Differentiation
+1️⃣ Autonomous Inventory Intelligence – Self‑monitoring and self‑correcting system
+2️⃣ Exception‑Driven Human Involvement – Humans handle only deviations
+3️⃣ Explainable AI – Every AI output is interpretable and auditable
+4️⃣ Sustainable AI Usage – AI used only where reasoning is required
+
+🧠 Gen AI Design Strategy
+1️⃣ Rationale for Gen AI
+Gen AI enables reasoning, explanation, and contextual insights that traditional rule‑based systems cannot provide.
+2️⃣ Prompt Design
+Structured prompts with:
+
+Context injection (limited historical data)
+Clear constraints
+Deterministic output formats
+
+3️⃣ AI Workflow
+Triggered only on:
+
+Anomalies
+Approval review
+Insight generation
+
+4️⃣ Human‑in‑the‑Loop
+Final approvals remain human‑controlled with fallback rules and override options.
+
+💰 Expected AI Usage Cost Awareness & Optimization
+
+Optimized prompts to reduce tokens
+AI calls only on exceptions
+Rule‑based logic for standard workflows
+Cached summaries for reuse
+
+
+🔒 Scope Boundaries
+
+No financial accounting
+No vendor procurement
+No IoT integrations
+
+
+⚠️ Risks, Assumptions & Constraints
+Risks
+
+Incorrect Excel uploads
+AI misinterpretation of anomalies
+
+Assumptions
+
+Standardized templates
+Stable internet access
+
+Technical Constraints
+
+API rate limits
+Limited historical data during early stages
+
+
+📊 Success Metrics
+1️⃣ Time Saved: ≥40% reduction in approval turnaround
+2️⃣ Adoption: High usage by executives and managers
+3️⃣ Error Reduction: ≥60% reduction in stock discrepancies
+4️⃣ Automation %: ≥70% workflows automated
+5️⃣ Efficiency Gains: Faster operations, improved trust in data
+
+✅ Final Vision Statement
+
+“Mavericks Inventory transforms inventory management from manual tracking to autonomous, self‑governing inventory intelligence.”

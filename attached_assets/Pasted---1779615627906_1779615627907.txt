@@ -1,0 +1,1450 @@
+╔══════════════════════════════════════════════════════════════════════════════════════╗
+║         MAVERICKS INVENTORY — COMPLETE FUNCTIONAL & TECHNICAL SPECIFICATION         ║
+║         Autonomous Inventory Intelligence Platform | Hexaware GenAI Designathon     ║
+║         Version: 1.0 | Date: 2026-05-24 | Team: Mavericks                          ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 0 — PLATFORM OVERVIEW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Platform Name   : Mavericks Inventory
+  Subtitle        : Autonomous Inventory Intelligence Platform
+  Organization    : Hexaware Technologies
+  Purpose         : AI-augmented, autonomous IT asset and inventory management
+                    system that eliminates manual intervention, enforces compliance,
+                    and provides real-time intelligence using GenAI.
+
+  Core Philosophy : Exception-Driven Human Involvement — humans act only when
+                    AI detects risk, deviation, or anomaly. Everything else is
+                    fully automated.
+
+  Tech Stack      :
+    Frontend      : React (TypeScript) — Single Page Application
+    Backend       : FastAPI (Python) — REST API
+    Database      : PostgreSQL — primary relational store
+    Cloud         : Microsoft Azure (App Service, Blob Storage)
+    AI            : Azure OpenAI — GPT-4o
+    DevOps        : Docker, GitHub Actions (CI/CD)
+    Design        : Figma
+
+  Out of Scope    :
+    - Financial accounting or invoicing
+    - Vendor procurement / purchase orders
+    - IoT integrations / warehouse automation
+    - GST or statutory compliance reporting
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 1 — AUTHENTICATION & SESSION MANAGEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  1.1  LOGIN
+       - Username/email + password authentication
+       - JWT access token issued on successful login (short expiry: 15 min)
+       - Refresh token issued for session renewal (expiry: 8 hours)
+       - Tokens stored in HttpOnly cookies (not localStorage) to prevent XSS
+       - Failed login attempt tracking — lockout after 5 consecutive failures
+       - Account lockout duration: 15 minutes (configurable by Admin)
+       - Login activity recorded in audit log (IP address, timestamp, success/fail)
+
+  1.2  LOGOUT
+       - Invalidates access and refresh tokens server-side (token blacklist)
+       - Session cleared from client
+       - Logout event recorded in audit log
+
+  1.3  PASSWORD MANAGEMENT
+       - Enforce minimum password policy: 8+ chars, uppercase, number, special char
+       - Bcrypt hashing with salt for all stored passwords
+       - Force password change on first login
+       - Password reset via secure email link (token expires in 1 hour)
+       - Password change history maintained — prevent last 5 passwords reuse
+       - Admin can force password reset for any user
+
+  1.4  SESSION MANAGEMENT
+       - Automatic session timeout after 30 minutes of inactivity
+       - Warning shown to user 5 minutes before session expiry
+       - Concurrent session control — configurable (default: 1 active session per user)
+       - Session tied to device fingerprint for additional security
+
+  1.5  TOKEN SECURITY
+       - All API calls require valid Bearer token in Authorization header
+       - Token refresh endpoint available before expiry
+       - Tokens invalidated on role change or account deactivation
+       - HTTPS enforced for all token transmissions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 2 — ROLE-BASED ACCESS CONTROL (RBAC)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  2.1  ROLES DEFINED
+       ┌─────────────────────────────┬────────────────────────────────────────────┐
+       │ Role                        │ Description                                │
+       ├─────────────────────────────┼────────────────────────────────────────────┤
+       │ Executive (Maker)           │ Stock entry, uploads, distribution requests│
+       │ Manager (Checker / L1)      │ First-level approver                       │
+       │ Management Authority (L2)   │ Second-level approver for high-risk items  │
+       │ System Administrator        │ User management, configuration, full audit │
+       └─────────────────────────────┴────────────────────────────────────────────┘
+
+  2.2  EXECUTIVE PERMISSIONS
+       - Upload bulk stock master data via Excel
+       - Create, edit, delete stock items (ONLY in Draft state)
+       - Submit stock items for activation
+       - Create single or bulk stock distribution transactions
+       - Edit distribution requests (ONLY in Draft or Rejected state)
+       - Delete distribution requests (ONLY in Draft state)
+       - Submit distribution transactions for approval
+       - View own transaction status and checker remarks
+       - View personal approval history
+       - View current stock availability (read-only)
+       - Download standard reports assigned to their scope
+       - CANNOT approve any transaction (strict Maker-Checker)
+
+  2.3  MANAGER (CHECKER / L1) PERMISSIONS
+       - Review all submitted distribution transactions
+       - Approve distribution requests (triggers Level 1 approval)
+       - Reject distribution requests with mandatory remarks
+       - View full audit trail of all transactions
+       - View complete stock movement history
+       - View AI risk scores and approval recommendations
+       - Generate and export approval history reports
+       - View anomaly alerts on dashboard
+       - CANNOT create, initiate, or edit distribution requests
+       - CANNOT modify stock master data
+
+  2.4  MANAGEMENT AUTHORITY (L2) PERMISSIONS
+       - All Manager permissions
+       - Final approval authority for transactions escalated to Level 2
+       - View high-risk distribution reports
+       - Configure escalation rules (delegated from Admin)
+       - Override AI recommendations (with mandatory remarks)
+
+  2.5  SYSTEM ADMINISTRATOR PERMISSIONS
+       - Full user CRUD (create, read, update, deactivate)
+       - Role assignment and revocation
+       - Configure organizational hierarchy (departments, locations)
+       - Configure approval workflow rules (thresholds, escalation)
+       - Configure system parameters (session timeout, lockout policy)
+       - Access full system audit logs (all users, all events)
+       - View and export all reports across all scopes
+       - Manage Excel upload templates
+       - Configure AI agent settings (risk thresholds, anomaly sensitivity)
+       - Configure notification rules
+       - System health monitoring
+
+  2.6  RBAC ENFORCEMENT
+       - All API endpoints protected by role-based middleware
+       - Frontend routes gated by role — unauthorized routes return 403
+       - Permission checks at both API layer and database row level
+       - Role changes take effect immediately (current sessions invalidated)
+       - Audit log records every permission check failure
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 3 — USER MANAGEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  3.1  USER CREATION
+       - Admin creates users individually via UI form
+       - Required fields: Full Name, Employee ID, Email, Department, Location, Role
+       - System auto-generates temporary password and sends to user email
+       - User forced to change password on first login
+       - Duplicate Employee ID and email detected and rejected
+
+  3.2  USER PROFILE
+       - View own profile: name, employee ID, email, role, department, location
+       - Update own contact details (email requires re-verification)
+       - View own login history (last 10 sessions)
+
+  3.3  USER DEACTIVATION (SOFT DELETE)
+       - Admin deactivates users — no hard delete allowed
+       - Deactivated users cannot log in
+       - All historical transactions created by deactivated users remain intact
+       - Pending approvals assigned to deactivated approvers must be re-routed
+       - Re-activation possible by Admin
+
+  3.4  ORGANIZATIONAL HIERARCHY
+       - Admin defines departments, sub-departments, locations/offices
+       - Users assigned to a department and location
+       - Reporting hierarchy used for approval routing and report scoping
+       - Hierarchy changes logged in audit trail
+
+  3.5  USER LISTING & SEARCH
+       - Admin views paginated list of all users
+       - Filter by role, department, location, active/inactive status
+       - Search by name or employee ID
+       - Export user list to Excel
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 4 — STOCK MASTER DATA MANAGEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  4.1  STOCK ITEM DATA MODEL
+       Each stock item must contain the following fields:
+       - Stock Code          : Unique identifier (alphanumeric, max 20 chars)
+       - Stock Name          : Full descriptive name
+       - Category            : Dropdown (e.g., Laptop, Server, Monitor, License, Network, Other)
+       - Sub-Category        : Optional (e.g., Under Laptop: Dell, HP, MacBook)
+       - Unit of Measure     : Dropdown (Units, Packs, GB, Licenses, etc.)
+       - Opening Quantity    : Initial stock count (integer, non-negative)
+       - Current Available Quantity : Calculated field (auto-maintained by system)
+       - Minimum Stock Level : Alert threshold for low stock warning
+       - Location / Warehouse : Where the stock is physically held
+       - Description         : Free-text detailed description
+       - Asset Tag Prefix    : Optional (for tagging distributed items)
+       - Status              : Draft / Active / Inactive (soft delete)
+       - Created By          : User reference
+       - Created Date/Time   : Auto-stamped
+       - Last Modified By    : User reference
+       - Last Modified Date/Time : Auto-stamped
+
+  4.2  SINGLE ITEM CREATE (UI FORM)
+       - Executive fills mandatory fields and submits
+       - Item saved in "Draft" state
+       - Admin activates Draft item → becomes "Active"
+       - Duplicate Stock Code validation at save time
+       - All mandatory field validation with inline error messages
+
+  4.3  BULK EXCEL UPLOAD
+       - Capacity: up to 50,000 rows per upload
+       - Template: downloadable standard Excel template from UI
+       - Mandatory columns: Stock Code, Name, Category, UoM, Opening Qty
+       - Optional columns: Sub-Category, Min Stock Level, Location, Description
+       - Upload stored temporarily in Azure Blob Storage
+       - Processing is ASYNC — user receives progress notification
+       - Processing pipeline steps:
+           Step 1 : File type validation (.xlsx only)
+           Step 2 : File size validation (max 10MB)
+           Step 3 : Column header validation (mandatory columns present)
+           Step 4 : Row-level data validation (data types, ranges, required fields)
+           Step 5 : Duplicate Stock Code detection (within file and against DB)
+           Step 6 : AI Self-Healing Agent applied (Section 8.1)
+           Step 7 : Valid records saved as Draft
+           Step 8 : Error report generated for invalid records
+       - Result notification displayed in UI and sent via email
+
+  4.4  UPLOAD RESULT STATES
+       - Full Success   : All rows valid → all saved as Draft
+       - Partial Success: Some rows valid, some invalid → valid rows saved,
+                          invalid rows in error report, user can correct and re-upload
+       - Full Failure   : No valid rows → nothing saved, full error report generated
+       - Error Report   : Downloadable Excel file with columns:
+                          Row Number, Stock Code, Column Name, Error Type, Error Message
+
+  4.5  STOCK ITEM STATES
+       - Draft    : Created but not activated; can be edited or deleted by Executive
+       - Active   : Available for distribution transactions
+       - Inactive : Soft-deleted; hidden from transaction screens but
+                    retained in ledger and reports
+
+  4.6  EDIT CONSTRAINTS
+       - Draft items : All fields editable by the Executive who created them
+       - Active items: Only non-critical fields editable (Name, Description,
+                       Min Stock Level, Location); Stock Code non-editable
+       - Inactive items: Read-only; no edits allowed
+
+  4.7  DELETE (SOFT DELETE) CONSTRAINTS
+       - Draft items  : Can be deleted (logical delete) by Executive
+       - Active items : CANNOT be deleted if any transaction history exists
+       - Active items with zero history: Can be deactivated by Admin only
+       - HARD DELETE IS STRICTLY PROHIBITED for any stock item at any time
+       - Deletion attempt on item with history returns error: "Cannot delete item
+         with existing transaction history. Use Deactivate instead."
+
+  4.8  CATEGORY MANAGEMENT
+       - Admin manages the master list of categories and sub-categories
+       - Add, rename, deactivate categories (deactivation only if no active items use it)
+
+  4.9  UNIT OF MEASURE MANAGEMENT
+       - Admin manages the master list of Units of Measure
+       - Add, rename, deactivate UoMs
+
+  4.10 STOCK ITEM LISTING & SEARCH
+       - Paginated list view for all roles (Executive, Manager, Admin)
+       - Columns: Stock Code, Name, Category, Available Qty, Min Level, Status, Health
+       - Color-coded health column: Green (above min), Yellow (at min), Red (below min)
+       - Filters: Category, Status, Location
+       - Search: by Stock Code or Name (full-text search)
+       - Sort: by any column
+       - Export grid to Excel and PDF
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 5 — STOCK DISTRIBUTION & TRANSACTION ENGINE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  5.1  DISTRIBUTION TRANSACTION DATA MODEL
+       Each distribution record must capture:
+       - Transaction ID         : System-generated unique identifier
+       - Stock Item Code/Name   : Reference to stock master
+       - Quantity Requested     : Integer, must be > 0
+       - Distribution Date      : Date of intended distribution
+       - Recipient Type         : Employee OR Project
+       - Recipient ID           : Employee ID or Project Code
+       - Recipient Name         : Display name (auto-populated from ID lookup)
+       - Location / Office      : Destination location
+       - Purpose / Remarks      : Free-text, mandatory
+       - Transaction Status     : Draft / Submitted / L1-Pending / L2-Pending /
+                                  Approved / Rejected
+       - AI Risk Score          : Low / Medium / High (auto-set by AI Agent)
+       - AI Recommendation      : Approve / Review / Reject (auto-set)
+       - AI Reasoning           : Plain-language explanation (auto-set)
+       - Created By             : User reference
+       - Created Date/Time      : Auto-stamped
+       - Last Modified By       : User reference
+       - Last Modified Date/Time: Auto-stamped
+       - Submitted By           : User reference
+       - Submitted Date/Time    : Auto-stamped
+
+  5.2  SINGLE DISTRIBUTION ENTRY (UI FORM)
+       - Executive selects stock item from active items list
+       - System shows current available quantity in real-time as item is selected
+       - Executive fills all mandatory fields
+       - System validates requested quantity ≤ available quantity before save
+       - Saved in "Draft" state
+       - Executive can edit any field while in Draft
+       - Executive submits → status moves to Submitted → triggers approval workflow
+
+  5.3  BULK DISTRIBUTION UPLOAD (EXCEL)
+       - Template downloadable from UI
+       - Mandatory columns: Stock Code, Quantity, Distribution Date,
+                            Recipient Type, Recipient ID, Purpose
+       - Same processing pipeline as stock master upload (Steps 1-8)
+       - Each valid row becomes a Draft transaction
+       - AI Self-Healing Agent applies to bulk distribution uploads also
+       - Error report generated for invalid rows
+       - Quantity validation: entire batch is checked; rows where quantity
+         exceeds available stock are individually flagged (not the whole batch)
+
+  5.4  TRANSACTION STATE MACHINE
+       ┌──────────────────────────────────────────────────────────────────┐
+       │                     TRANSACTION STATE FLOW                       │
+       │                                                                  │
+       │   [Create]    [Submit]     [L1 Review]       [L2 Review]         │
+       │    Draft ──► Submitted ──► L1-Pending ──────► L2-Pending        │
+       │               │             │    │               │    │          │
+       │               │         [Approve] [Reject]  [Approve] [Reject]  │
+       │               │             │       │             │      │       │
+       │               │           Final   Back to     Final   Back to   │
+       │               │          Approved  Draft      Approved  Draft   │
+       │               │                                                  │
+       │   Note: L2-Pending only for transactions meeting escalation      │
+       │         threshold configured by Admin                            │
+       └──────────────────────────────────────────────────────────────────┘
+
+  5.5  STATE TRANSITION RULES
+       Draft       → Submitted   : Executive action (Submit button)
+       Submitted   → L1-Pending  : Auto-transition, notification sent to Manager
+       L1-Pending  → Approved    : Manager approval (if no L2 threshold triggered)
+       L1-Pending  → L2-Pending  : Manager approves but L2 threshold met
+       L1-Pending  → Rejected    : Manager rejects (mandatory remarks required)
+       L2-Pending  → Approved    : Management Authority approves
+       L2-Pending  → Rejected    : Management Authority rejects (mandatory remarks)
+       Rejected    → Draft       : Auto-transition; Executive notified with remarks
+       Draft       → Submitted   : Executive edits and resubmits (re-enters workflow)
+
+  5.6  EDIT & DELETE CONSTRAINTS (STRICT)
+       - Edit Distribution   : ONLY in Draft or Rejected state
+       - Delete Distribution : ONLY in Draft state (soft delete)
+       - Submitted/Pending   : No edits or deletes permitted
+       - Approved            : No edits or deletes ever permitted
+       - Rejected            : Edit allowed, delete not allowed (preserve audit trail)
+
+  5.7  STOCK QUANTITY MANAGEMENT (CRITICAL)
+       - Available quantity is NEVER deducted on Draft or Submitted state
+       - Available quantity is NEVER deducted on L1-Pending or L2-Pending state
+       - Available quantity IS DEDUCTED only upon FINAL APPROVED state
+       - Rejection at any level = zero impact on available stock quantity
+       - System must prevent submission of any request where quantity > current
+         available stock at the moment of submission (real-time check)
+       - Concurrent request protection: if two Executives simultaneously request
+         the last 5 units, the second request is rejected with
+         "Insufficient stock — quantity was reserved by another transaction"
+       - Reserved Quantity concept: once submitted, quantity is soft-reserved
+         to prevent over-commitment across concurrent pending approvals
+
+  5.8  DISTRIBUTION LISTING & SEARCH
+       - All users see transactions scoped to their role
+       - Executive: sees own transactions
+       - Manager: sees all transactions pending L1 approval + full history
+       - Management Authority: sees all L2-pending + full history
+       - Admin: sees all transactions across all users
+       - Filters: Status, Date Range, Stock Category, Recipient, Location
+       - Search: by Transaction ID, Stock Code, Recipient ID
+       - Sort: by date, status, quantity, risk score
+       - Export grid to Excel and PDF
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 6 — MAKER-CHECKER APPROVAL WORKFLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  6.1  LEVEL 1 APPROVAL (MANDATORY)
+       - Every distribution transaction must be reviewed by at least one Manager
+       - Manager is presented with:
+           * Full transaction details
+           * Current available stock vs. requested quantity
+           * Recipient information and history
+           * AI Risk Score (Low/Medium/High)
+           * AI Recommendation (Approve / Review / Reject) with reasoning
+           * Historical approval pattern for similar requests
+       - Actions available: Approve | Reject
+       - Rejection requires mandatory remarks (minimum 20 characters)
+       - Approval SLA: System processes the approval action within 3 seconds
+       - Manager CANNOT modify transaction details — read-only view
+
+  6.2  LEVEL 2 APPROVAL (CONFIGURABLE)
+       - Triggered automatically based on Admin-configured rules:
+           * Quantity threshold per category (e.g., > 50 Laptops)
+           * Total estimated value threshold
+           * Specific item categories always requiring L2
+           * New recipient / first-time high-volume request
+       - If L2 triggered: After L1 Manager approves → auto-escalates to L2 queue
+       - Management Authority sees same information as Manager + L1 remarks
+       - Actions: Approve | Reject (rejection requires mandatory remarks)
+       - If L2 not triggered: L1 Manager approval = Final approval
+
+  6.3  REJECTION & CORRECTION LOOP
+       - On rejection (any level): Transaction status → Draft
+       - Executive notified immediately via in-app notification + email
+       - Rejection remarks visible to Executive in transaction detail view
+       - Executive can edit fields and resubmit → re-enters full workflow from L1
+       - Number of resubmissions tracked in transaction audit history
+       - Rejection without edit and resubmit within 7 days → auto-archival alert
+
+  6.4  APPROVAL ASSIGNMENT
+       - By default: all Managers in the same department see L1 queue
+       - First Manager to action the transaction claims it (optimistic locking)
+       - If Manager starts review and session times out → transaction returns to queue
+       - Admin can explicitly assign transactions to specific Managers
+       - Reassignment tracked in audit log
+
+  6.5  ESCALATION MECHANISM
+       - If L1 approver has not acted within configurable SLA (default: 48 hours)
+         → automatic escalation notification sent to Approver + their Manager
+       - If still no action after extended SLA (default: 72 hours)
+         → escalation to Management Authority for override
+       - All escalation events logged in transaction audit trail
+
+  6.6  APPROVAL WORKSPACE (UI)
+       - Dedicated Approval Queue screen for Managers
+       - Cards layout showing pending transactions with:
+           * Stock item, quantity, recipient, submission time
+           * AI Risk Score badge (colour-coded)
+           * Quick-action buttons: Approve / Reject / View Details
+       - Bulk approval for Low-risk transactions (with confirmation dialog)
+       - Priority sort: High Risk first by default
+       - Filter by risk level, category, date submitted
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 7 — STOCK LEDGER & AUDIT TRAIL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  7.1  STOCK MOVEMENT LEDGER (PER ITEM)
+       - An immutable, append-only ledger entry is created for every stock movement
+       - Ledger entry contains:
+           * Entry ID          : Auto-generated
+           * Stock Item Code   : Reference
+           * Movement Type     : IN (upload/adjustment) / OUT (approved distribution)
+           * Quantity          : Movement amount
+           * Running Balance   : Calculated after this movement
+           * Transaction Reference : Linked transaction ID (if applicable)
+           * Performed By      : User reference
+           * Date/Time         : Auto-stamped (UTC)
+           * Source            : Upload / Manual Entry / Approved Distribution / Adjustment
+           * Remarks           : Optional additional context
+       - Ledger is READ-ONLY — no updates or deletes ever permitted
+       - Ledger ensures the balance at any point in time is fully reconstructable
+
+  7.2  TRANSACTION AUDIT HISTORY (PER TRANSACTION)
+       - Every state change in a transaction creates an immutable audit record:
+           * Who performed the action
+           * What state it moved from/to
+           * Date/Time of the action
+           * Remarks (mandatory for rejections)
+           * AI recommendation at the time of action
+       - This creates a complete, chronological audit trail per transaction
+       - Audit trail visible in transaction detail view to Managers and Admins
+
+  7.3  SYSTEM AUDIT LOG (GLOBAL)
+       - All system events logged to a global audit log:
+           * User logins/logouts (including failed attempts)
+           * User creation, modification, deactivation
+           * Role changes
+           * Configuration changes
+           * File uploads (with file name, size, uploader, result)
+           * API errors and system errors
+           * AI agent invocations (input context hash, output, latency)
+           * Report exports (who exported what and when)
+       - Global audit log is READ-ONLY — accessible only to Admins
+       - Exportable to Excel with date range filter
+
+  7.4  DATA RETENTION & IMMUTABILITY
+       - NO hard deletes for any transactional, ledger, or audit data — EVER
+       - Soft deletes use status flags only
+       - Data retention period: minimum 7 years (configurable by Admin)
+       - Database-level constraints prevent DELETE on audit and ledger tables
+       - Archived data remains queryable via reports
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 8 — AI & AGENTIC AUTOMATION LAYER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  DESIGN PRINCIPLES FOR ALL AI AGENTS:
+  - AI is NEVER blocking — all AI calls are async; business logic proceeds
+    independently and AI results are injected when ready
+  - AI NEVER takes autonomous action — all outputs are recommendations only
+  - Every AI output includes a plain-language explanation (Explainable AI)
+  - Full fallback to rule-based logic if Azure OpenAI is unavailable
+  - AI invocation logged in system audit log with input context hash and output
+  - AI outputs stored and re-used within TTL (caching to control API costs)
+  - Structured JSON output format enforced via prompt constraints
+
+  ─────────────────────────────────────────────────────────────────────────────
+  8.1  AGENT 1 — DATA INGESTION & SELF-HEALING AGENT
+  ─────────────────────────────────────────────────────────────────────────────
+
+  Trigger       : Excel file uploaded (stock master or distribution bulk upload)
+  Purpose       : Intercept messy uploads and auto-correct minor issues instead
+                  of rejecting the entire file; explain all failures clearly
+
+  AUTO-CORRECTION CAPABILITIES (Self-Healing):
+  - Date format normalization : "05-24-2026", "24 May 2026", "2026.05.24"
+                                → all normalized to standard ISO 8601 (YYYY-MM-DD)
+  - Case normalization        : "LAPTOP" / "laptop" → normalized per master list
+  - Whitespace trimming       : Leading/trailing spaces in all text fields
+  - Numeric type coercion     : "100.0" → 100 for integer fields
+  - UoM matching              : "Units", "unit", "UNIT" → "Units" (fuzzy match)
+  - Category matching         : "Laptops" → "Laptop" (singular/plural normalization)
+  - Stock Code formatting     : Remove special characters, normalize case
+
+  HARD FAILURE HANDLING (Cannot auto-correct):
+  - Missing mandatory fields  → Natural language error: "Row 15 is missing Recipient ID"
+  - Quantity exceeds stock    → "Row 22: Requested qty (100) exceeds available stock (45)"
+  - Duplicate stock code      → "Row 30: Stock Code LAPTOP-001 already exists in system"
+  - Invalid recipient ID      → "Row 45: Employee ID EMP9999 does not exist in the system"
+  - Negative quantities       → "Row 7: Quantity cannot be negative"
+
+  OUTPUT:
+  - Corrected data saved (valid + auto-corrected rows)
+  - Error report: human-readable, row-by-row explanation in plain English
+  - Summary: "32 rows saved successfully. 3 rows corrected automatically.
+              5 rows failed and require manual correction. See error report."
+
+  FALLBACK (if AI unavailable):
+  - Rule-based validation still runs fully
+  - Auto-corrections not applied; entire failing rows reported with technical codes
+  - Upload still processes — AI only enhances, never blocks
+
+  ─────────────────────────────────────────────────────────────────────────────
+  8.2  AGENT 2 — INTELLIGENT APPROVAL ASSIST (RISK SCORING ENGINE)
+  ─────────────────────────────────────────────────────────────────────────────
+
+  Trigger       : Every distribution transaction transitions to L1-Pending state
+  Purpose       : Reduce Manager decision fatigue by providing contextual risk
+                  assessment and a clear recommendation before they review
+
+  INPUTS TO AI MODEL:
+  - Current distribution request (stock item, quantity, recipient, purpose)
+  - Recipient's 90-day distribution history (count, items, quantities)
+  - Item's average monthly distribution volume across the organization
+  - Current available stock vs. requested quantity (% utilization)
+  - Recipient's department and role
+  - Historical approval/rejection rate for similar requests
+
+  AI OUTPUTS (structured JSON):
+  - risk_score      : "Low" | "Medium" | "High"
+  - recommendation  : "Approve" | "Review" | "Reject"
+  - confidence      : Float (0.0–1.0)
+  - reasoning       : Plain-language explanation (2-3 sentences)
+  - flags           : Array of specific concerns (e.g., "Unusual item for this project type")
+  - similar_cases   : Summary of 3 most similar past approvals
+
+  EXAMPLE OUTPUTS:
+  - "Recommend Approval (Low Risk): Standard request of 1 laptop for new joiner
+    EMP12345 in the Chennai office. Consistent with onboarding pattern for this
+    department. 97% of similar requests approved."
+  - "Flag for Review (High Risk): Requesting 10 AWS licenses for Project PRJ-456,
+    which historically uses Azure. This is atypical. Recommend verifying with
+    project team before approving."
+  - "Recommend Rejection (High Risk): This is the 3rd laptop request from EMP7890
+    within 60 days. Previous requests did not include return of prior assets."
+
+  DISPLAY:
+  - Risk Score badge shown on approval queue card and transaction detail
+  - Recommendation card shown in Approval Workspace with full reasoning
+  - Manager can override any recommendation — override must include remarks
+  - AI recommendation and Manager's final decision both stored in audit trail
+
+  FALLBACK (if AI unavailable):
+  - Rule-based risk scoring: quantity > threshold = High, first-time = Medium, else Low
+  - Recommendation: Approve for Low, Review for Medium+High
+  - UI displays "AI Assist Unavailable — Rule-Based Score Applied"
+
+  ─────────────────────────────────────────────────────────────────────────────
+  8.3  AGENT 3 — AUTONOMOUS ANOMALY DETECTION (BACKGROUND MONITOR)
+  ─────────────────────────────────────────────────────────────────────────────
+
+  Trigger       : Continuous background monitoring (scheduled every 15 minutes)
+                  AND triggered immediately on every approved transaction
+  Purpose       : Proactively detect rogue allocations, unusual depletion patterns,
+                  and stock anomalies before they cause audit failures
+
+  RULE-BASED DETECTION LAYER (always active, AI-independent):
+  - Velocity anomaly    : Item depleted > X% in < Y days (X, Y configurable)
+  - Volume anomaly      : Single transaction quantity > Z standard deviations from mean
+  - Frequency anomaly   : Same recipient receiving the same item > N times in 30 days
+  - Low stock alert     : Available quantity falls below configured minimum stock level
+  - Zero stock alert    : Available quantity reaches 0
+  - Category depletion  : Entire category depleted > 50% in < 7 days
+  - Location anomaly    : One office receiving disproportionate share of a category
+  - Repeated rejection  : Same transaction pattern rejected > 2 times by same approver
+
+  AI EXPLANATION LAYER (triggered when rule-based anomaly detected):
+  - Input: Anomaly event details + item's 180-day distribution history
+  - Output: Plain-language explanation of probable cause
+  - Output: Recommended corrective action
+  - Output: Urgency level (Informational / Warning / Critical)
+  - Example: "Anomaly Detected (Critical): 40% of Chennai office monitor inventory
+              depleted in 48 hours. 8 transactions approved, all by the same Manager.
+              Recommend immediate audit of transactions TXN-1892 through TXN-1900."
+
+  DASHBOARD ALERTS:
+  - Real-time alert panel on Executive, Manager, and Admin dashboards
+  - Color coding: Green (normal), Yellow (warning), Red (critical)
+  - Each alert shows: Item, Anomaly Type, Detected Time, AI Explanation, Urgency
+  - Admin can acknowledge/resolve alerts with mandatory resolution notes
+  - Unacknowledged critical alerts escalate to Management Authority after 1 hour
+
+  NOTIFICATIONS:
+  - Critical anomalies: immediate in-app notification + email to Admin and Managers
+  - Warning anomalies: daily digest email to Admins
+  - All anomaly detections logged to system audit trail
+
+  FALLBACK (if AI unavailable):
+  - Rule-based detections still fire
+  - Alert shown without AI explanation: "Anomaly detected (AI explanation unavailable)"
+  - Same notification and dashboard behavior
+
+  ─────────────────────────────────────────────────────────────────────────────
+  8.4  AGENT 4 — CONVERSATIONAL INSIGHTS AGENT (NLP REPORTING)
+  ─────────────────────────────────────────────────────────────────────────────
+
+  Trigger       : User types a natural language query in the "Ask Inventory" interface
+  Purpose       : Eliminate the need for manual filter construction; any user can
+                  get instant, accurate inventory reports via plain English
+
+  INTERFACE:
+  - Chat-style input box available on Dashboard and Reports section
+  - Query history maintained per user session
+  - Suggested queries shown as chips (e.g., "Top 5 most distributed items this month")
+
+  CAPABILITIES:
+  - Generate any standard report via natural language
+  - Filter by date range, category, location, user, status
+  - Aggregate queries: totals, averages, top-N, trend over time
+  - Comparative queries: "Compare laptop distributions Jan vs Feb 2026"
+  - Health queries: "Which categories are below minimum stock level?"
+  - Approval queries: "Show all transactions rejected by Manager ID M001 this week"
+
+  PROCESSING:
+  - AI converts NL query to structured SQL query
+  - SQL executed against read replica of database
+  - Results displayed in formatted data table in UI
+  - Export to Excel / PDF available for all query results
+  - Query and result cached for 5 minutes (same query returns cached result)
+
+  EXAMPLE INTERACTIONS:
+  - "Generate a report of all rejected laptop requests this month"
+    → Returns table of rejected laptop distributions with requester, reason, date
+  - "How many monitors are available in the Mumbai office?"
+    → Returns current available count for monitors at Mumbai location
+  - "What is the average approval time for the past 30 days?"
+    → Returns average hours from Submitted to Approved
+
+  SAFETY:
+  - Read-only queries only — no INSERT/UPDATE/DELETE generated
+  - SQL generated is validated against allowlist before execution
+  - Query sanitization prevents SQL injection via AI output
+  - Ambiguous queries: AI asks a clarifying question before generating SQL
+  - AI response always includes the SQL it ran (visible to Admin for transparency)
+
+  FALLBACK (if AI unavailable):
+  - Standard filter-based report builder shown as fallback interface
+  - Message: "Conversational query unavailable. Use filters below."
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 9 — REPORTING & DASHBOARDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  9.1  EXECUTIVE DASHBOARD
+       - My Transactions widget: count by status (Draft/Submitted/Approved/Rejected)
+       - Pending Action widget: transactions awaiting resubmission (rejected)
+       - Stock Availability widget: quick view of most-distributed categories
+       - AI Alert banner: any active anomalies relevant to their scope
+       - AI-generated Inventory Health Summary (refreshed on load, cached 5 min)
+       - Recent Activity feed: last 10 of their own transactions
+       - Quick-action buttons: New Distribution, Upload Excel, View Reports
+
+  9.2  MANAGER DASHBOARD
+       - Pending Approvals widget: count and list of L1-pending transactions
+       - High-Risk Approvals highlight: transactions with AI Risk Score = High
+       - Today's Actions: approvals/rejections actioned today
+       - AI Anomaly Alerts panel: all active anomalies (warning + critical)
+       - Stock Health Overview: items below minimum level
+       - Approval Velocity metric: average approval turnaround (last 30 days)
+       - Quick-action: Go to Approval Queue
+
+  9.3  ADMIN DASHBOARD
+       - System Health overview (all modules: green/yellow/red)
+       - User Activity: active sessions, logins today
+       - Total Transactions by Status (pie/bar chart)
+       - Top 10 Most Distributed Items (current month)
+       - Anomaly Summary: active anomalies by severity
+       - Approval Bottlenecks: transactions pending > 48 hours
+       - Excel Upload History: last 10 uploads with status
+       - AI Agent Status: last run times, success/failure counts
+
+  9.4  STANDARD REPORTS (all exportable to Excel and PDF)
+
+       Report 1 : CURRENT STOCK AVAILABILITY
+                  Columns: Stock Code, Name, Category, Opening Qty, Total Distributed,
+                           Current Available, Min Level, Health Status, Location
+                  Filters: Category, Location, Health Status
+                  Default: All active items, ordered by Health Status (Red first)
+
+       Report 2 : STOCK DISTRIBUTION HISTORY
+                  Columns: Transaction ID, Stock Code, Name, Qty, Distribution Date,
+                           Recipient, Purpose, Status, Approved By, Approved Date
+                  Filters: Date Range, Stock Code, Recipient, Status, Location
+                  Default: Last 30 days, all approved transactions
+
+       Report 3 : PENDING APPROVALS
+                  Columns: Transaction ID, Stock Code, Qty, Submitted By,
+                           Submission Date, Days Pending, Current Level, AI Risk Score
+                  Filters: Approval Level (L1/L2), Days Pending Range, Risk Score
+                  Default: All currently pending, sorted by Days Pending descending
+
+       Report 4 : APPROVAL HISTORY
+                  Columns: Transaction ID, Stock Code, Qty, Submitted By,
+                           Submission Date, Reviewed By, Review Date,
+                           Decision (Approve/Reject), Remarks, Turnaround Hours
+                  Filters: Date Range, Reviewer, Decision, Stock Category
+                  Default: Last 30 days
+
+       Report 5 : STOCK MOVEMENT LEDGER
+                  Columns: Date/Time, Stock Code, Name, Movement Type (IN/OUT),
+                           Qty, Running Balance, Source, Performed By
+                  Filters: Stock Code, Date Range, Movement Type
+                  Default: Specific item selected, last 90 days
+
+       Report 6 : ANOMALY HISTORY
+                  Columns: Anomaly ID, Detected Date, Stock Code, Anomaly Type,
+                           Severity, AI Explanation, Acknowledged By,
+                           Resolution Date, Resolution Notes
+                  Filters: Date Range, Severity, Stock Code, Status (Active/Resolved)
+                  Default: Last 90 days
+
+       Report 7 : REJECTION ANALYSIS
+                  Columns: Transaction ID, Stock Code, Qty, Requested By,
+                           Rejected By, Rejection Date, Rejection Remarks,
+                           Resubmitted (Y/N), Final Status
+                  Filters: Date Range, Rejected By, Stock Code
+                  Default: Last 30 days
+
+       Report 8 : USER ACTIVITY LOG
+                  Columns: Date/Time, User ID, User Name, Role, Action, Details,
+                           IP Address
+                  Filters: User, Role, Action Type, Date Range
+                  Access: Admin only
+                  Default: Last 7 days
+
+  9.5  EXPORT SPECIFICATIONS
+       - Excel export: .xlsx format, formatted with headers, data validation removed
+       - PDF export: A4 landscape, company header, report name, generated by/date
+       - All exports include timestamp and user who generated the report
+       - Large exports (> 10,000 rows): async generation with download link notification
+       - Exports stored in Azure Blob Storage for 30 days, then auto-deleted
+
+  9.6  REAL-TIME HEALTH INDICATORS
+       - Color scheme applied consistently across all stock views:
+           Green  : Available quantity > Minimum Stock Level
+           Yellow : Available quantity = Minimum Stock Level (at risk)
+           Red    : Available quantity < Minimum Stock Level or = 0 (critical)
+       - Dashboard widgets update in real-time via WebSocket / polling (15-second interval)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 10 — NOTIFICATIONS & ALERTS SYSTEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  10.1 IN-APP NOTIFICATIONS
+       - Bell icon in header with unread count badge
+       - Notification tray: last 50 notifications, paginated
+       - Mark as read / mark all as read
+       - Click notification → navigate to relevant screen
+       - Notification types:
+           * Transaction submitted (to assigned Approver)
+           * Transaction approved (to submitter)
+           * Transaction rejected (to submitter with remarks)
+           * Transaction escalated to L2 (to Management Authority)
+           * Anomaly detected (to Managers and Admin)
+           * Upload complete (to uploader: success or error report ready)
+           * SLA overdue alert (to approver and their manager)
+           * Stock below minimum level (to Admin and relevant Managers)
+           * Report ready for download (async exports)
+
+  10.2 EMAIL NOTIFICATIONS
+       - Sent for all critical events (same list as in-app, above)
+       - Email template: branded, professional HTML with plain-text fallback
+       - Deep-link in email navigates directly to relevant action in the app
+       - Unsubscribe option per notification category (except compliance-required alerts)
+       - Email delivery logged; delivery failures flagged in Admin dashboard
+
+  10.3 NOTIFICATION PREFERENCES
+       - Each user configures: in-app only / email + in-app / none (per category)
+       - Admin can force-enable critical notifications (anomaly, SLA breach) — cannot be disabled
+
+  10.4 DASHBOARD ALERTS PANEL
+       - Persistent alert panel on all dashboards showing active, unresolved anomalies
+       - Sorted by severity: Critical (red) → Warning (yellow) → Informational (blue)
+       - Each alert: item, description, time detected, acknowledge button
+       - Acknowledged alerts require resolution notes before dismissal
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 11 — SYSTEM CONFIGURATION & ADMINISTRATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  11.1 APPROVAL WORKFLOW CONFIGURATION
+       - L2 threshold rules (configurable per category):
+           * Quantity threshold: e.g., > 50 units of Laptops → trigger L2
+           * New recipient flag: first-time request always L2 for high-value items
+           * Always-L2 categories: e.g., Servers, always require Management Authority
+       - Approval SLA settings: L1 deadline, L2 deadline
+       - Escalation recipients per department
+       - All configuration changes logged in audit trail with before/after values
+
+  11.2 ORGANIZATION HIERARCHY CONFIGURATION
+       - Departments: add, rename, deactivate
+       - Sub-departments
+       - Locations / Offices: add, rename, associate with departments
+       - Approver mapping: which Manager covers which departments/locations
+
+  11.3 EXCEL TEMPLATE MANAGEMENT
+       - Admin uploads and versions the standard Excel templates
+       - Both stock master template and distribution template manageable
+       - Template versioning: prior versions downloadable for reference
+       - Template change notification sent to all active Executives
+
+  11.4 AI AGENT CONFIGURATION
+       - Anomaly detection sensitivity: configurable thresholds per rule
+       - Risk scoring weights: adjustable for quantity, frequency, recipient history
+       - AI cache TTL settings per agent
+       - AI fallback mode toggle (force rule-based only for testing)
+
+  11.5 SECURITY CONFIGURATION
+       - Password policy settings (min length, complexity, history)
+       - Session timeout duration
+       - Failed login lockout policy (attempts, duration)
+       - API rate limiting settings
+
+  11.6 NOTIFICATION CONFIGURATION
+       - SMTP settings for email notifications
+       - Email templates (customizable)
+       - Notification triggers enable/disable per event type
+
+  11.7 SYSTEM HEALTH MONITORING
+       - Admin dashboard shows health of all system components:
+           * API server status
+           * Database connection status
+           * Azure Blob Storage status
+           * Azure OpenAI API status (last ping, success rate)
+           * Background job queue status (pending, processing, failed)
+       - Automated health check every 60 seconds
+       - Alert to Admin if any component goes to degraded/down status
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 12 — FILE MANAGEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  12.1 UPLOAD HANDLING
+       - All uploads go to Azure Blob Storage (not local disk)
+       - File stored with: uploader ID, timestamp, original filename, file hash
+       - File type validation: .xlsx only for data uploads
+       - File size limit: 10MB per upload
+       - Virus/malware scan applied before processing (Azure Defender for Storage)
+       - File name sanitized to prevent path traversal attacks
+       - Upload URL: pre-signed Azure SAS URL (expires in 15 minutes)
+
+  12.2 TEMPLATE DOWNLOADS
+       - Templates served from Azure Blob via pre-signed download URL
+       - Download logged per user (who downloaded what template and when)
+       - Template version stored with each upload for traceable reconciliation
+
+  12.3 REPORT EXPORTS
+       - Generated reports stored in Azure Blob
+       - Download link valid for 24 hours
+       - Reports auto-deleted from Blob after 30 days
+       - Large async report download notified via in-app notification
+
+  12.4 ERROR REPORTS
+       - Excel error reports stored in Azure Blob
+       - Linked to the original upload record
+       - Downloadable by the uploader for 7 days, then auto-deleted
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 13 — API DESIGN & INTEGRATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  13.1 API STANDARDS
+       - RESTful API with consistent resource-based URL structure
+       - API versioned from day 1: /api/v1/...
+       - JSON request/response bodies for all endpoints
+       - HTTP status codes used correctly (200, 201, 400, 401, 403, 404, 409, 422, 500)
+       - Standard error response schema:
+           { "error_code": "INSUFFICIENT_STOCK",
+             "message": "Requested qty 100 exceeds available qty 45 for LAPTOP-001",
+             "details": {...} }
+       - OpenAPI / Swagger documentation auto-generated and accessible at /api/docs
+       - All endpoints require JWT Bearer token (except /auth/login)
+
+  13.2 CORE ENDPOINT GROUPS
+       /api/v1/auth          — Login, logout, refresh, password management
+       /api/v1/users         — User CRUD, role management
+       /api/v1/stock-items   — Stock master CRUD, bulk upload
+       /api/v1/distributions — Distribution CRUD, submit, approve, reject
+       /api/v1/approvals     — Approval queue, bulk approve
+       /api/v1/ledger        — Stock movement ledger reads
+       /api/v1/reports       — Report generation and export
+       /api/v1/ai            — AI agent queries (conversational insights)
+       /api/v1/anomalies     — Anomaly list, acknowledge, resolve
+       /api/v1/notifications — Notification read/unread management
+       /api/v1/config        — Admin configuration endpoints
+       /api/v1/uploads       — File upload presigned URL, status, error report
+       /api/v1/health        — System health check (public endpoint)
+
+  13.3 PERFORMANCE TARGETS
+       - Standard CRUD API responses: < 200ms p95
+       - Approval action endpoint: < 3 seconds (SLA requirement)
+       - Report generation (< 10k rows): < 5 seconds
+       - Async operations (Excel processing, large reports): immediate
+         acknowledgment with job ID; results via polling or notification
+
+  13.4 RATE LIMITING
+       - Per authenticated user: 300 requests per minute
+       - Upload endpoint: 5 uploads per minute per user
+       - AI query endpoint: 20 queries per minute per user
+       - Rate limit headers in response: X-RateLimit-Remaining, X-RateLimit-Reset
+       - 429 response when limit exceeded with retry-after header
+
+  13.5 BACKGROUND JOB SYSTEM
+       - Job queue for async operations (Excel processing, report generation, AI calls)
+       - Job states: Queued → Processing → Completed | Failed
+       - Failed jobs: auto-retry up to 3 times with exponential backoff
+       - Job status queryable via /api/v1/jobs/{job_id}
+       - Dead-letter queue for permanently failed jobs (Admin visibility)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 14 — DATABASE SCHEMA (CORE TABLES)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  users               : id, employee_id, full_name, email, password_hash,
+                        role_id, department_id, location_id, is_active,
+                        created_at, updated_at, last_login_at
+
+  roles               : id, role_name, description, created_at
+
+  departments         : id, name, parent_department_id, is_active
+
+  locations           : id, name, department_id, city, country, is_active
+
+  stock_items         : id, stock_code (UNIQUE), name, category_id, sub_category_id,
+                        uom_id, opening_qty, available_qty, min_stock_level,
+                        location_id, description, asset_tag_prefix,
+                        status (draft/active/inactive), created_by, created_at,
+                        updated_by, updated_at
+
+  categories          : id, name, parent_category_id, is_active
+
+  units_of_measure    : id, name, abbreviation, is_active
+
+  distributions       : id, transaction_code (UNIQUE), stock_item_id, qty_requested,
+                        distribution_date, recipient_type, recipient_id,
+                        recipient_name, location_id, purpose, status,
+                        ai_risk_score, ai_recommendation, ai_reasoning,
+                        created_by, created_at, submitted_by, submitted_at,
+                        updated_by, updated_at
+
+  approval_history    : id, distribution_id, level (L1/L2), action (Approve/Reject),
+                        actioned_by, actioned_at, remarks,
+                        ai_recommendation_at_time, override_reason
+
+  stock_ledger        : id, stock_item_id, movement_type (IN/OUT),
+                        qty, running_balance, distribution_id (nullable),
+                        upload_id (nullable), performed_by, performed_at,
+                        source, remarks
+                        [NO DELETE, NO UPDATE constraints enforced]
+
+  anomalies           : id, stock_item_id, anomaly_type, severity,
+                        detected_at, ai_explanation, recommended_action,
+                        status (active/acknowledged/resolved),
+                        acknowledged_by, acknowledged_at,
+                        resolved_by, resolved_at, resolution_notes
+
+  upload_jobs         : id, uploaded_by, file_name, file_url, file_hash,
+                        upload_type (stock_master/distribution),
+                        status, rows_total, rows_valid, rows_corrected,
+                        rows_failed, error_report_url, created_at, completed_at
+
+  audit_log           : id, user_id, event_type, entity_type, entity_id,
+                        description, old_value_json, new_value_json,
+                        ip_address, user_agent, created_at
+                        [APPEND-ONLY, NO DELETE constraint enforced]
+
+  notifications       : id, user_id, type, title, message, related_entity_type,
+                        related_entity_id, is_read, created_at, read_at
+
+  ai_invocations      : id, agent_type, input_hash, output_json, latency_ms,
+                        model_used, token_count, is_cached, created_at,
+                        related_entity_id, related_entity_type
+
+  system_config       : id, config_key (UNIQUE), config_value, description,
+                        updated_by, updated_at
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 15 — SECURITY REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  15.1 TRANSPORT SECURITY
+       - HTTPS/TLS 1.2+ enforced for all connections
+       - HTTP → HTTPS redirect mandatory
+       - HSTS header set (max-age: 31536000)
+       - TLS certificates: Azure-managed, auto-renewed
+
+  15.2 APPLICATION SECURITY
+       - All user inputs validated and sanitized on the server-side
+       - Parameterized queries / ORM used everywhere — no raw SQL string concatenation
+       - XSS prevention: Content Security Policy headers, output encoding
+       - CSRF protection: SameSite=Strict cookies, CSRF tokens for state-changing ops
+       - Secure file upload: MIME type validation, file extension check, virus scan
+       - Excel files processed in isolated environment — macros/formulas stripped before read
+       - No sensitive data (passwords, tokens) logged in application logs
+       - Secrets stored in Azure Key Vault — never in code or environment files
+       - Dependency security: automated vulnerability scanning in CI pipeline (pip-audit)
+
+  15.3 API SECURITY
+       - All endpoints require authentication except /health and /auth/login
+       - JWT tokens signed with RS256 (asymmetric key)
+       - Token expiry strictly enforced server-side
+       - Sensitive endpoints (user management, config) require re-authentication
+       - CORS: configured to allow only the known frontend origin
+       - Security headers: X-Content-Type-Options, X-Frame-Options, Referrer-Policy
+
+  15.4 DATA SECURITY
+       - Passwords: bcrypt with work factor ≥ 12
+       - Sensitive fields in DB (email, employee IDs) encrypted at column level
+       - Azure PostgreSQL encryption-at-rest enabled
+       - Azure Blob Storage encryption-at-rest enabled
+       - Database backups encrypted
+       - No PII in application logs or error messages
+
+  15.5 AUDIT & COMPLIANCE
+       - Segregation of duties enforced (Maker-Checker) — no user can both create
+         and approve the same transaction
+       - Every data modification creates an immutable audit record
+       - Admin access to audit logs is itself logged
+       - Regular access review: Admin notified of users inactive > 90 days
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 16 — NON-FUNCTIONAL REQUIREMENTS (NFRs)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  16.1 PERFORMANCE
+       - API p95 response time: < 200ms for standard read/write operations
+       - Approval action processing: < 3 seconds end-to-end
+       - Excel upload of 50,000 rows: initiated within 2 seconds, completed async
+         (typical processing time < 3 minutes for 50k rows)
+       - Dashboard load: < 2 seconds (cached AI summaries; data from optimized queries)
+       - Report generation (< 10k rows): < 5 seconds
+       - Report generation (> 10k rows): async, ready within 2 minutes
+       - Database queries: indexes on all foreign keys, status fields, date fields,
+         stock codes, and employee IDs
+
+  16.2 AVAILABILITY & RELIABILITY
+       - Target uptime: 99.5% (allows ~3.65 hours/month downtime)
+       - Azure App Service: deployment slots for zero-downtime deployments
+       - Database: Azure PostgreSQL with high-availability (automatic failover)
+       - Blob Storage: Azure ZRS (Zone-Redundant Storage) for file redundancy
+       - Automated daily database backups with 30-day retention
+       - Point-in-time restore capability
+
+  16.3 SCALABILITY
+       - Azure App Service auto-scaling based on CPU and request queue depth
+       - Database connection pooling (PgBouncer or similar)
+       - Stateless API design — horizontal scaling without session affinity
+       - Background job workers independently scalable
+
+  16.4 RESILIENCE & FAULT TOLERANCE
+       - AI API fallback: if Azure OpenAI times out (> 5 seconds) or returns error,
+         rule-based fallback activates immediately — user workflow is NEVER blocked
+       - Circuit breaker pattern around all external API calls (Azure OpenAI, email)
+       - Retry with exponential backoff: 3 retries, 2s, 4s, 8s delays
+       - Partial upload recovery: if processing fails mid-batch, completed rows
+         are preserved; re-upload processes only failed rows (idempotent by stock code)
+       - Transaction rollback: any failed DB write triggers full rollback to
+         preserve data consistency
+       - Graceful degradation: if AI agent is fully down, UI shows
+         "AI features temporarily unavailable — standard operations unaffected"
+
+  16.5 BROWSER & DEVICE SUPPORT
+       - Supported browsers: Chrome 100+, Edge 100+, Firefox 100+, Safari 15+
+       - Responsive design: works on desktop (1280px+) and tablet (768px+)
+       - Mobile (< 768px): read-only views supported; data entry optimized for desktop
+
+  16.6 INTERNATIONALISATION
+       - All dates displayed in DD-MMM-YYYY format (locale-neutral)
+       - Timezone: All server-side timestamps in UTC; displayed in user's local timezone
+       - Currency: Not applicable (quantities only, no financial data)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 17 — DEVOPS & INFRASTRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  17.1 CONTAINERISATION
+       - Backend (FastAPI): Dockerfile, multi-stage build (build + runtime)
+       - Frontend (React): Dockerfile, Nginx serving static build
+       - docker-compose.yml for local development (app + DB + Redis)
+       - Docker images tagged with Git commit SHA for traceability
+
+  17.2 CI/CD PIPELINE (GITHUB ACTIONS)
+       Pipeline stages:
+       1. Lint         : ESLint (frontend), flake8/ruff (backend)
+       2. Type Check   : TypeScript tsc, mypy (backend)
+       3. Unit Tests   : Jest (frontend), pytest (backend)
+       4. Security Scan: pip-audit, npm audit, SAST scan
+       5. Build        : Docker build (backend + frontend)
+       6. Integration Tests: API tests against test DB (pytest + httpx)
+       7. Push         : Push tagged images to Azure Container Registry
+       8. Deploy       : Deploy to staging slot (Azure App Service)
+       9. Smoke Tests  : Health check + critical path tests on staging
+       10. Promote     : Manual approval gate → promote staging to production
+
+  17.3 ENVIRONMENTS
+       - Local     : Docker Compose, local PostgreSQL
+       - Staging   : Azure App Service staging slot, staging DB
+       - Production: Azure App Service production slot, production DB
+
+  17.4 ENVIRONMENT VARIABLES & SECRETS
+       - No secrets in code or git
+       - Azure Key Vault for production secrets (DB connection, JWT keys, OpenAI key)
+       - GitHub Actions secrets for CI/CD credentials
+       - .env.example committed; .env never committed
+
+  17.5 DATABASE MIGRATIONS
+       - Alembic (SQLAlchemy) for schema migrations
+       - All migrations version-controlled in /migrations
+       - Migration applied automatically on container startup (non-destructive only)
+       - Destructive migrations require manual review and approval
+
+  17.6 MONITORING & OBSERVABILITY
+       - Application logs: structured JSON logs sent to Azure Monitor
+       - Metrics: request count, error rate, response time, AI call latency
+       - Alerts: Azure Monitor alerts on error rate spike, response time breach,
+         AI API failure rate > 10%
+       - Health endpoint: /api/v1/health returns DB, Blob, OpenAI connectivity status
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 18 — UI/UX SPECIFICATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  18.1 DESIGN SYSTEM
+       - Hexaware brand colors and typography
+       - Component library: consistent buttons, forms, tables, modals, cards
+       - Dark-friendly dashboard theme (dark gradient background as per brochure)
+       - Color system: Green (#22C55E) / Yellow (#EAB308) / Red (#EF4444) for health status
+       - Risk badge colors: Blue (Low) / Orange (Medium) / Red (High)
+
+  18.2 NAVIGATION
+       - Top navigation bar: logo, app name, user info, notification bell, logout
+       - Left sidebar: role-specific navigation links
+       - Breadcrumb trail on all inner pages
+
+  18.3 KEY SCREENS
+       Screen 01 — Login Page
+                   Email/password form, forgot password link, Hexaware branding
+
+       Screen 02 — Executive Dashboard
+                   My transaction summary, stock health widget, AI alerts, quick actions
+
+       Screen 03 — Manager Dashboard
+                   Approval queue count, high-risk highlight, anomaly alerts
+
+       Screen 04 — Admin Dashboard
+                   System health, activity overview, anomaly summary
+
+       Screen 05 — Stock Items List
+                   Searchable, filterable, paginated grid with health column
+
+       Screen 06 — Stock Item Detail / Edit Form
+                   All fields, edit controls per state, stock ledger mini-view
+
+       Screen 07 — Bulk Upload Screen
+                   Template download, drag-and-drop upload, progress indicator,
+                   result summary, error report download
+
+       Screen 08 — New Distribution Form
+                   Stock selector with live available qty, recipient lookup,
+                   form fields, submit / save draft
+
+       Screen 09 — Distribution List
+                   Role-scoped list, filters, status badges, export
+
+       Screen 10 — Approval Workspace (Manager)
+                   Card-based queue, AI recommendation card with risk score,
+                   approve/reject with remarks, bulk approve for Low-risk
+
+       Screen 11 — Transaction Detail
+                   Full history of state changes, AI reasoning, approval remarks trail
+
+       Screen 12 — Reports Section
+                   Report selector, filter panel, results table, export buttons,
+                   Conversational AI query box
+
+       Screen 13 — Anomaly Dashboard
+                   Active anomaly cards, severity filter, acknowledge/resolve workflow
+
+       Screen 14 — User Management (Admin)
+                   User list, create user form, role assignment, deactivate button
+
+       Screen 15 — System Configuration (Admin)
+                   Tabbed settings: Workflow, RBAC, Templates, AI, Notifications
+
+  18.4 UX PRINCIPLES
+       - Inline validation: errors shown as user types (not on submit only)
+       - Optimistic UI: immediate visual feedback on approval actions
+       - Confirmation dialogs for all destructive or irreversible actions
+       - Empty states: meaningful messages with suggested actions
+       - Loading states: skeleton loaders (not spinners) for table data
+       - Accessibility: WCAG 2.1 AA — keyboard navigation, ARIA labels, contrast ratios
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 19 — SUCCESS METRICS & ACCEPTANCE CRITERIA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Metric 1 — Approval Turnaround Time
+             Target  : ≥ 40% reduction vs. current manual process
+             Measure : Average hours from Submitted → Approved (tracked in system)
+
+  Metric 2 — Stock Discrepancy Rate
+             Target  : ≥ 60% reduction in stock reconciliation errors
+             Measure : Count of anomalies detected vs. manually caught (baseline)
+
+  Metric 3 — Workflow Automation
+             Target  : ≥ 70% of inventory workflows fully automated (no manual step)
+             Measure : Transactions processed without manual intervention / total
+
+  Metric 4 — User Adoption
+             Target  : 100% of Executives and Managers using the platform
+             Measure : Weekly active users, transactions entered via platform
+
+  Metric 5 — AI Accuracy (Approval Recommendations)
+             Target  : ≥ 85% alignment between AI recommendation and Manager decision
+             Measure : (AI recommended Approve + Manager approved) + (AI Reject + Mgr rejected)
+                       / total transactions with AI recommendation
+
+  Metric 6 — System Uptime
+             Target  : ≥ 99.5% monthly uptime
+             Measure : Azure App Service availability monitoring
+
+  Metric 7 — Audit Readiness
+             Target  : 100% of transactions have complete, unbroken audit trail
+             Measure : Audit completeness query on approval_history + audit_log tables
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 20 — RISKS, ASSUMPTIONS & CONSTRAINTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  RISKS & MITIGATIONS:
+  Risk 1 : Incorrect Excel uploads cause invalid stock data
+           Mitigation: Template validation, AI self-healing, downloadable error report
+
+  Risk 2 : AI misinterprets edge-case anomalies → false alerts
+           Mitigation: Human-in-the-loop confirmation required; configurable
+                       sensitivity thresholds; fallback rule-based engine
+
+  Risk 3 : Approval bottleneck when approvers are unavailable
+           Mitigation: Configurable SLA escalation; bulk approval for low-risk;
+                       Management Authority override
+
+  Risk 4 : Azure OpenAI API downtime or rate limits
+           Mitigation: Circuit breaker + rule-based fallback; cached AI outputs
+                       with TTL; retry with exponential backoff
+
+  Risk 5 : Concurrent stock depletion race condition
+           Mitigation: Soft-reserve on submission; DB-level optimistic locking
+                       on available_qty updates
+
+  ASSUMPTIONS:
+  - Standardized Excel templates finalized before rollout
+  - Approval hierarchy configured by Admin before go-live
+  - All users have reliable internet access (internal network or VPN)
+  - Azure services available in the target region
+  - Historical transaction data for AI training context available from go-live
+    (AI models work with limited history early on; improve over time)
+
+  TECHNICAL CONSTRAINTS:
+  - Azure OpenAI API rate limits: managed with retry + caching + batching
+  - AI model context window: 128k tokens — sufficient for 180-day distribution history
+  - Limited historical data in early deployment: AI recommendations less precise
+    until 3+ months of data accumulated
+  - Excel processing is CPU-intensive: async background processing is mandatory
+    for files > 1,000 rows
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 21 — SCOPE BOUNDARIES (OUT OF SCOPE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  The following are explicitly out of scope for this platform:
+  - Financial accounting, invoicing, or monetary valuation of stock
+  - Vendor management, purchase orders, or procurement workflows
+  - IoT integrations or barcode/RFID scanning
+  - Warehouse automation or bin/shelf location management
+  - GST, VAT, or statutory compliance reporting
+  - Integration with external ERP systems (SAP, Oracle, etc.)
+  - Mobile native app (iOS/Android) — responsive web only
+  - Multi-tenancy (single organization deployment)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 22 — DEVELOPMENT TIMELINE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Week 1 — Foundation
+    - Requirements finalization and sign-off
+    - System architecture design and documentation
+    - PostgreSQL schema design and Alembic migrations setup
+    - UI/UX wireframes in Figma (all 15 screens)
+    - Project scaffolding: FastAPI + React + Docker setup
+    - GitHub Actions CI pipeline configured
+    - Azure infrastructure provisioned (App Service, DB, Blob, OpenAI)
+
+  Week 2 — Core Data Layer
+    - Stock master CRUD (single item, UI form)
+    - Bulk Excel upload pipeline (validation, error report)
+    - RBAC implementation (roles, JWT, middleware)
+    - User management module (Admin)
+    - Category and UoM management
+
+  Week 3 — Transaction & Workflow Engine
+    - Stock distribution entry (single form + bulk upload)
+    - Full transaction state machine implementation
+    - Maker-Checker approval workflow (L1 + L2 configurable)
+    - Rejection loop with remarks
+    - Stock quantity soft-reserve and deduction on approval
+    - In-app and email notification system
+
+  Week 4 — AI Integration
+    - Agent 1: Self-Healing Data Ingestion (Azure OpenAI integration)
+    - Agent 2: Approval Assist / Risk Scoring Engine
+    - Agent 3: Anomaly Detection (background monitor + explanation)
+    - Agent 4: Conversational Insights NLP Query Interface
+    - AI fallback rule-based implementations for all agents
+    - AI invocation logging and caching
+
+  Week 5 — Dashboards, Reports & Stabilization
+    - All 3 role-based dashboards
+    - All 8 standard reports with Excel/PDF export
+    - Real-time health indicators and anomaly alerts panel
+    - End-to-end integration testing
+    - Performance testing (50k row upload, concurrent users)
+    - Security review and hardening
+    - Deployment to production on Azure
+    - ~80% completion milestone delivery
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 23 — COMPLETE FUNCTIONALITY CHECKLIST (A-Z COVERAGE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] Anomaly detection (rule-based + AI-explained, background continuous)
+  [ ] Anomaly alert acknowledgement and resolution workflow
+  [ ] API versioning and OpenAPI documentation
+  [ ] Approval history full trail per transaction
+  [ ] Approval queue workspace for Managers (card view + bulk approve)
+  [ ] Approval SLA tracking and escalation on breach
+  [ ] Approval workflow: L1 mandatory, L2 configurable by threshold
+  [ ] Audit log: global, immutable, append-only system event log
+  [ ] Authentication: JWT login, refresh, logout, token blacklist
+  [ ] Background job queue for async operations
+  [ ] Bulk approval for low-risk transactions (Manager feature)
+  [ ] Category and sub-category management (Admin)
+  [ ] Circuit breaker for Azure OpenAI and email service calls
+  [ ] Color-coded health indicators (Green/Yellow/Red) on all stock views
+  [ ] Concurrent stock reservation (soft-reserve on submit, prevent over-commit)
+  [ ] Configuration management for all workflow rules (Admin)
+  [ ] Conversational NLP query interface (AI Agent 4)
+  [ ] Dashboard: Admin (system health, anomalies, activity overview)
+  [ ] Dashboard: Executive (my transactions, stock health, AI alerts)
+  [ ] Dashboard: Manager (approval queue, high-risk highlight, anomalies)
+  [ ] Data retention policy (7-year minimum, configurable)
+  [ ] Database schema: all core tables with proper indexes and constraints
+  [ ] Docker containerisation for backend and frontend
+  [ ] Email notifications for all critical workflow events
+  [ ] Error report generation (downloadable Excel with row-level explanations)
+  [ ] Escalation mechanism for overdue approvals
+  [ ] Excel template download for stock master and distribution uploads
+  [ ] Fault-tolerant AI fallback: rule-based logic if OpenAI unavailable
+  [ ] File upload: Azure Blob Storage, pre-signed SAS URL, virus scan
+  [ ] GitHub Actions CI/CD pipeline (lint, test, build, deploy)
+  [ ] Hard-delete prevention: enforced at DB and API layer for all data
+  [ ] Health check endpoint (public, shows all component status)
+  [ ] In-app notification system (bell, tray, unread count, deep-link)
+  [ ] JWT authentication with RS256, short expiry, refresh token flow
+  [ ] Ledger: immutable stock movement ledger per item (IN/OUT, running balance)
+  [ ] Login lockout after 5 failed attempts (configurable)
+  [ ] Maker-Checker segregation of duties (strict, enforced at API layer)
+  [ ] Minimum stock level alerting (Yellow/Red health indicators)
+  [ ] NLP query safety: read-only SQL, validation against allowlist
+  [ ] No-hard-delete policy for all transactional and master data
+  [ ] Notification preferences per user per event type
+  [ ] Organizational hierarchy management (departments, locations, Admin)
+  [ ] Password policy enforcement and history (last 5 passwords)
+  [ ] PDF export for all reports and grids
+  [ ] Pagination, filtering, sorting on all list views
+  [ ] Partial upload recovery (idempotent re-upload by stock code)
+  [ ] Performance targets: API < 200ms p95, approval < 3s, uploads async
+  [ ] Rate limiting per user per endpoint category
+  [ ] RBAC: role-based middleware protecting all API endpoints and UI routes
+  [ ] Real-time dashboard refresh (15-second polling or WebSocket)
+  [ ] Rejection loop: transaction returns to Draft with mandatory remarks
+  [ ] Report generation: 8 standard reports, async for large datasets
+  [ ] Resilience: retry with exponential backoff for all external calls
+  [ ] Risk scoring (AI-generated: Low/Medium/High) per distribution transaction
+  [ ] Role management: 4 roles (Executive, Manager, Management Authority, Admin)
+  [ ] Secrets management: Azure Key Vault, no secrets in code/git
+  [ ] Security headers: CSP, HSTS, X-Frame-Options, X-Content-Type-Options
+  [ ] Self-healing agent (AI Agent 1): auto-correct minor Excel issues
+  [ ] Session management: timeout, concurrent session control
+  [ ] Soft delete for stock items, users, and distributions (status flags)
+  [ ] SQL injection prevention (parameterized queries, ORM only)
+  [ ] Stock code uniqueness validation (within upload and against DB)
+  [ ] Stock distribution: single form entry and bulk Excel upload
+  [ ] Stock distribution quantity validation (prevent exceeding available qty)
+  [ ] Stock item CRUD: single form and bulk Excel, with state machine
+  [ ] Stock item states: Draft / Active / Inactive
+  [ ] Stock master bulk upload capacity: 50,000 rows
+  [ ] System configuration UI (Admin): all workflow, security, AI, notification settings
+  [ ] Transaction state machine: Draft→Submitted→L1-Pending→[L2-Pending]→Approved/Rejected
+  [ ] Unit of Measure management (Admin)
+  [ ] Upload history and status tracking per user
+  [ ] User activity log report (Admin only)
+  [ ] User creation with email verification and forced first-login password change
+  [ ] User deactivation (soft delete, not hard delete)
+  [ ] User management: full CRUD by Admin
+  [ ] Virus/malware scan on all uploaded files (Azure Defender for Storage)
+  [ ] WebSocket or polling for real-time dashboard updates
+  [ ] XSS prevention: CSP headers, output encoding, React's built-in escaping
+  [ ] Zero-downtime deployments (Azure deployment slots)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+END OF SPECIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Document:  all spec.txt
+Project:   Mavericks Inventory — Autonomous Inventory Intelligence Platform
+Team:      Mavericks | Hexaware GenAI Designathon 2026
+Authors:   Ruthravarshan (2000171723), Sai Ritheshwar (2000171692), Sai Anish V U (2000167626)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -1,0 +1,779 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Mavericks Inventory API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: stocks
+    description: Stock master operations
+  - name: distributions
+    description: Stock distribution operations
+  - name: approvals
+    description: Approval workflow operations
+  - name: dashboard
+    description: Dashboard summary and analytics
+  - name: anomalies
+    description: AI anomaly detection
+  - name: insights
+    description: AI insights generation
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ── Stock Master ──────────────────────────────────────────────
+  /stocks:
+    get:
+      operationId: listStocks
+      tags: [stocks]
+      summary: List all stock items
+      parameters:
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: location
+          schema: { type: string }
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: search
+          schema: { type: string }
+      responses:
+        "200":
+          description: List of stock items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockItem"
+    post:
+      operationId: createStock
+      tags: [stocks]
+      summary: Create a single stock item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StockItemInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockItem"
+
+  /stocks/{id}:
+    get:
+      operationId: getStock
+      tags: [stocks]
+      summary: Get a stock item by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Stock item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockItem"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateStock
+      tags: [stocks]
+      summary: Update a stock item
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StockItemUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockItem"
+    delete:
+      operationId: deleteStock
+      tags: [stocks]
+      summary: Soft delete a stock item
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /stocks/{id}/ledger:
+    get:
+      operationId: getStockLedger
+      tags: [stocks]
+      summary: Get stock movement ledger for an item
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Stock ledger entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LedgerEntry"
+
+  # ── Distributions ─────────────────────────────────────────────
+  /distributions:
+    get:
+      operationId: listDistributions
+      tags: [distributions]
+      summary: List distribution entries
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: stockId
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Distribution list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Distribution"
+    post:
+      operationId: createDistribution
+      tags: [distributions]
+      summary: Create a distribution entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DistributionInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Distribution"
+
+  /distributions/{id}:
+    get:
+      operationId: getDistribution
+      tags: [distributions]
+      summary: Get a distribution entry
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Distribution entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Distribution"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateDistribution
+      tags: [distributions]
+      summary: Update a distribution entry (Draft or Rejected only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DistributionUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Distribution"
+    delete:
+      operationId: deleteDistribution
+      tags: [distributions]
+      summary: Delete a distribution entry (Draft only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /distributions/{id}/submit:
+    post:
+      operationId: submitDistribution
+      tags: [distributions]
+      summary: Submit a distribution for approval
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Distribution"
+
+  # ── Approvals ─────────────────────────────────────────────────
+  /approvals:
+    get:
+      operationId: listApprovals
+      tags: [approvals]
+      summary: List pending approval requests
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+      responses:
+        "200":
+          description: Approval requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApprovalRequest"
+
+  /approvals/{id}:
+    get:
+      operationId: getApproval
+      tags: [approvals]
+      summary: Get an approval request with AI recommendation
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Approval request with AI data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalRequest"
+        "404":
+          description: Not found
+
+  /approvals/{id}/approve:
+    post:
+      operationId: approveRequest
+      tags: [approvals]
+      summary: Approve a distribution request
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalAction"
+      responses:
+        "200":
+          description: Approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalRequest"
+
+  /approvals/{id}/reject:
+    post:
+      operationId: rejectRequest
+      tags: [approvals]
+      summary: Reject a distribution request
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalAction"
+      responses:
+        "200":
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalRequest"
+
+  # ── Dashboard ─────────────────────────────────────────────────
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get high-level dashboard stats
+      responses:
+        "200":
+          description: Dashboard summary stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/activity:
+    get:
+      operationId: getRecentActivity
+      tags: [dashboard]
+      summary: Get recent stock activity feed
+      responses:
+        "200":
+          description: Recent activity items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  /dashboard/health-scores:
+    get:
+      operationId: getStockHealthScores
+      tags: [dashboard]
+      summary: Get health scores for all stock items
+      responses:
+        "200":
+          description: Stock health scores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockHealthScore"
+
+  # ── Anomalies ─────────────────────────────────────────────────
+  /anomalies:
+    get:
+      operationId: listAnomalies
+      tags: [anomalies]
+      summary: List anomaly alerts
+      parameters:
+        - in: query
+          name: all
+          schema: { type: string }
+        - in: query
+          name: status
+          schema: { type: string }
+      responses:
+        "200":
+          description: Anomaly alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AnomalyAlert"
+
+  /anomalies/{id}/dismiss:
+    post:
+      operationId: dismissAnomaly
+      tags: [anomalies]
+      summary: Dismiss an anomaly alert
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Dismissed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnomalyAlert"
+
+  /anomalies/{id}/acknowledge:
+    post:
+      operationId: acknowledgeAnomaly
+      tags: [anomalies]
+      summary: Acknowledge an anomaly alert
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [acknowledgedBy]
+              properties:
+                acknowledgedBy: { type: string }
+      responses:
+        "200":
+          description: Acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnomalyAlert"
+
+  /anomalies/{id}/resolve:
+    post:
+      operationId: resolveAnomaly
+      tags: [anomalies]
+      summary: Resolve an anomaly alert with notes
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [notes]
+              properties:
+                notes: { type: string }
+                resolvedBy: { type: string }
+      responses:
+        "200":
+          description: Resolved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnomalyAlert"
+
+  # ── Activity / Audit Log ─────────────────────────────────────
+  /activity:
+    get:
+      operationId: listActivity
+      tags: [dashboard]
+      summary: List full audit activity log
+      parameters:
+        - in: query
+          name: type
+          schema: { type: string }
+        - in: query
+          name: actor
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Activity log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  # ── AI Insights ───────────────────────────────────────────────
+  /insights/inventory-health:
+    get:
+      operationId: getInventoryInsight
+      tags: [insights]
+      summary: Get AI-generated inventory health summary
+      responses:
+        "200":
+          description: AI inventory insight
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryInsight"
+
+  /insights/query:
+    post:
+      operationId: queryInsights
+      tags: [insights]
+      summary: Natural language inventory query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InsightQuery"
+      responses:
+        "200":
+          description: AI query response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsightQueryResponse"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    StockItem:
+      type: object
+      required: [id, stockCode, stockName, category, unitOfMeasure, openingQuantity, availableQuantity, location, status, createdAt]
+      properties:
+        id:              { type: integer }
+        stockCode:       { type: string }
+        stockName:       { type: string }
+        category:        { type: string }
+        unitOfMeasure:   { type: string }
+        openingQuantity: { type: number }
+        availableQuantity: { type: number }
+        minStockLevel:   { type: ["number", "null"] }
+        location:        { type: ["string", "null"] }
+        status:          { type: string }
+        healthScore:     { type: ["number", "null"] }
+        createdAt:       { type: string }
+        updatedAt:       { type: ["string", "null"] }
+
+    StockItemInput:
+      type: object
+      required: [stockCode, stockName, category, unitOfMeasure, openingQuantity]
+      properties:
+        stockCode:       { type: string }
+        stockName:       { type: string }
+        category:        { type: string }
+        unitOfMeasure:   { type: string }
+        openingQuantity: { type: number }
+        minStockLevel:   { type: number }
+        location:        { type: string }
+        status:          { type: string }
+
+    StockItemUpdate:
+      type: object
+      properties:
+        stockName:       { type: string }
+        category:        { type: string }
+        unitOfMeasure:   { type: string }
+        location:        { type: string }
+        minStockLevel:   { type: number }
+        status:          { type: string }
+
+    LedgerEntry:
+      type: object
+      required: [id, stockId, type, quantity, description, createdAt]
+      properties:
+        id:          { type: integer }
+        stockId:     { type: integer }
+        type:        { type: string }
+        quantity:    { type: number }
+        description: { type: string }
+        createdAt:   { type: string }
+        createdBy:   { type: ["string", "null"] }
+
+    Distribution:
+      type: object
+      required: [id, stockId, stockName, quantityDistributed, distributionDate, recipient, purpose, status, createdAt]
+      properties:
+        id:                   { type: integer }
+        stockId:              { type: integer }
+        stockName:            { type: string }
+        stockCode:            { type: ["string", "null"] }
+        quantityDistributed:  { type: number }
+        distributionDate:     { type: string }
+        recipient:            { type: string }
+        purpose:              { type: ["string", "null"] }
+        status:               { type: string }
+        remarks:              { type: ["string", "null"] }
+        submittedAt:          { type: ["string", "null"] }
+        approvedAt:           { type: ["string", "null"] }
+        createdAt:            { type: string }
+
+    DistributionInput:
+      type: object
+      required: [stockId, quantityDistributed, distributionDate, recipient]
+      properties:
+        stockId:              { type: integer }
+        quantityDistributed:  { type: number }
+        distributionDate:     { type: string }
+        recipient:            { type: string }
+        purpose:              { type: string }
+
+    DistributionUpdate:
+      type: object
+      properties:
+        quantityDistributed:  { type: number }
+        distributionDate:     { type: string }
+        recipient:            { type: string }
+        purpose:              { type: string }
+
+    ApprovalRequest:
+      type: object
+      required: [id, distributionId, distribution, status, createdAt]
+      properties:
+        id:             { type: integer }
+        distributionId: { type: integer }
+        distribution:   { $ref: "#/components/schemas/Distribution" }
+        status:         { type: string }
+        remarks:        { type: ["string", "null"] }
+        approvedBy:     { type: ["string", "null"] }
+        approvedAt:     { type: ["string", "null"] }
+        aiRecommendation: { $ref: "#/components/schemas/AiRecommendation" }
+        createdAt:      { type: string }
+
+    AiRecommendation:
+      type: object
+      required: [recommendation, riskScore, riskLevel, reasoning]
+      properties:
+        recommendation: { type: string }
+        riskScore:      { type: number }
+        riskLevel:      { type: string }
+        reasoning:      { type: string }
+        confidence:     { type: ["number", "null"] }
+
+    ApprovalAction:
+      type: object
+      required: [remarks]
+      properties:
+        remarks: { type: string }
+
+    DashboardSummary:
+      type: object
+      required: [totalStockItems, totalAvailableUnits, pendingApprovals, anomalyCount, healthyCount, warningCount, criticalCount, totalDistributions]
+      properties:
+        totalStockItems:       { type: integer }
+        totalAvailableUnits:   { type: number }
+        pendingApprovals:      { type: integer }
+        anomalyCount:          { type: integer }
+        healthyCount:          { type: integer }
+        warningCount:          { type: integer }
+        criticalCount:         { type: integer }
+        totalDistributions:    { type: integer }
+        automationPercentage:  { type: ["number", "null"] }
+
+    ActivityItem:
+      type: object
+      required: [id, type, description, timestamp]
+      properties:
+        id:          { type: integer }
+        type:        { type: string }
+        description: { type: string }
+        timestamp:   { type: string }
+        actor:       { type: ["string", "null"] }
+        stockCode:   { type: ["string", "null"] }
+
+    StockHealthScore:
+      type: object
+      required: [stockId, stockCode, stockName, healthScore, healthStatus, availableQuantity, category]
+      properties:
+        stockId:           { type: integer }
+        stockCode:         { type: string }
+        stockName:         { type: string }
+        healthScore:       { type: number }
+        healthStatus:      { type: string }
+        availableQuantity: { type: number }
+        category:          { type: string }
+        location:          { type: ["string", "null"] }
+
+    AnomalyAlert:
+      type: object
+      required: [id, stockId, stockCode, stockName, type, severity, description, detectedAt, dismissed, status]
+      properties:
+        id:               { type: integer }
+        stockId:          { type: integer }
+        stockCode:        { type: string }
+        stockName:        { type: string }
+        type:             { type: string }
+        severity:         { type: string }
+        description:      { type: string }
+        explanation:      { type: ["string", "null"] }
+        detectedAt:       { type: string }
+        dismissed:        { type: boolean }
+        status:           { type: string }
+        acknowledgedBy:   { type: ["string", "null"] }
+        acknowledgedAt:   { type: ["string", "null"] }
+        resolvedBy:       { type: ["string", "null"] }
+        resolvedAt:       { type: ["string", "null"] }
+        resolutionNotes:  { type: ["string", "null"] }
+
+    InventoryInsight:
+      type: object
+      required: [summary, generatedAt, healthPercentage]
+      properties:
+        summary:          { type: string }
+        generatedAt:      { type: string }
+        healthPercentage: { type: number }
+        keyObservations:
+          type: array
+          items: { type: string }
+        recommendedActions:
+          type: array
+          items: { type: string }
+
+    InsightQuery:
+      type: object
+      required: [query]
+      properties:
+        query: { type: string }
+
+    InsightQueryResponse:
+      type: object
+      required: [answer, queryType, generatedAt]
+      properties:
+        answer:      { type: string }
+        queryType:   { type: string }
+        generatedAt: { type: string }
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
